@@ -1,11 +1,12 @@
-import requests
-import logging
 import sys
 import time
-import random
-import multiprocessing
 import json
+import random
+import logging
+import requests
+import multiprocessing
 
+from IPython import embed
 from bs4 import BeautifulSoup
 from prettytable import PrettyTable
 
@@ -64,14 +65,13 @@ class Datastorer():
         self.cases[idx]["manager"] = None
 
 class Crawler():
-    def __init__(self,
+    def __init__( self,
                   data,
                   url,
                   type,
                   max=0,
                   debug = False):
         """_summary_
-
         Args:
             data (Datastorer):
             url (string):
@@ -154,10 +154,12 @@ class Crawler():
                     time.sleep(delay)
                     # retries = retries+1
 
+        self.__parse_bisection()
+        self.__parse_discussion()
+
         self.data.title = self.__parse_title()
         self.data.patch = self.__parse_patch()
 
-        # TODO: add 
         tables = self.__parse_tables()
         if len(tables) >= 1:
             for i,table in enumerate(tables):
@@ -186,7 +188,50 @@ class Crawler():
             return []
         return tables
 
+    # TODO: add bisection parser
+    def __parse_bisection(self):
+        """
+        return cause_bisection_url, fixed_bisection_url
+        """
+        bisection = self.soup.find_all('div', {"class":"bug-bisection-info"})
+
+        cause_bisection,fixed_bisection = None,None
+        if len(bisection) == 2:
+            cause_bisection = bisection[0]
+            fixed_bisection = bisection[1]
+        elif len(bisection) == 1:
+            cause_bisection = bisection[0]
+        elif len(bisection) == 0:
+            return None, None
+        else:
+            print("why there are multi bug-bisection-infos")
+            exit(-1)
+        
+        cause_bisection_url,fixed_bisection_url = None, None
+        import ipdb; ipdb.set_trace()
+
+        if cause_bisection:
+            cause = cause_bisection.find('b').string
+            if cause == "Cause bisection: introduced by":
+                cause_bisection_url = cause_bisection.find('br').find('a').attrs['href'] 
+
+        if fixed_bisection:
+            fixed = fixed_bisection.find('b').string
+            if fixed == "Fix bisection: fixed by":
+                fixed_bisection_url = fixed_bisection.find('br').find('a').attrs['href']
+
+        return cause_bisection_url, fixed_bisection_url
+    
+    def __parse_address(self):
+        bisection = self.soup.find_all('div', {"class":"bug-bisection-info"})
+    
+    def __parse_discussion(self):
+        return
+
     def __parse_patch(self):
+        """
+        return patch commit url add by maintainer
+        """
         patch = None
         mono = self.soup.find("span", {"class": "mono"})
         if mono is None:
@@ -215,7 +260,6 @@ class Crawler():
         except:
             self.logger.error("parse crash table failed")
             return False
-
         # we assume every vulnerability record will contain at least entry which can satisfy our demands
         # let user choice which is better ?
     def __parse_table_index(self, table):
