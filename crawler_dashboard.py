@@ -208,8 +208,6 @@ class Crawler():
             exit(-1)
         
         cause_bisection_url,fixed_bisection_url = None, None
-        import ipdb; ipdb.set_trace()
-
         if cause_bisection:
             cause = cause_bisection.find('b').string
             if cause == "Cause bisection: introduced by":
