@@ -1,3 +1,4 @@
+import re
 import sys
 import time
 import json
@@ -154,11 +155,12 @@ class Crawler():
                     time.sleep(delay)
                     # retries = retries+1
 
-        self.__parse_bisection()
-        self.__parse_discussion()
 
         self.data.title = self.__parse_title()
         self.data.patch = self.__parse_patch()
+
+        self.__parse_bisection()
+        self.__parse_discussion()
 
         tables = self.__parse_tables()
         if len(tables) >= 1:
@@ -184,7 +186,7 @@ class Crawler():
     def __parse_tables(self):
         tables = self.soup.find_all('table', {"class": "list_table"})
         if len(tables) == 0:
-            print("Fail to retrieve bug cases from list_table")
+            print("[-] Failed to retrieve bug cases from list_table")
             return []
         return tables
 
@@ -204,7 +206,7 @@ class Crawler():
         elif len(bisection) == 0:
             return None, None
         else:
-            print("why there are multi bug-bisection-infos")
+            print("[-] why there are multi bug-bisection-infos")
             exit(-1)
         
         cause_bisection_url,fixed_bisection_url = None, None
@@ -220,11 +222,39 @@ class Crawler():
 
         return cause_bisection_url, fixed_bisection_url
     
-    def __parse_address(self):
-        bisection = self.soup.find_all('div', {"class":"bug-bisection-info"})
-    
     def __parse_discussion(self):
-        return
+        """
+        return discussion_url(string[]), address(bool)
+        """
+        # find discussions table first
+        discussion_url = []
+        address = False
+
+        span_tag = self.soup.find_all('span', text=re.compile(r'Discussions \(\d+\)'))
+        if len(span_tag) == 1:
+            div_head = span_tag[0].find_parent('div', class_='head')
+            div_content = div_head.find_next_sibling('div', class_='content')
+            table = div_content.find('table', class_='list_table')
+            try:
+                cases = self.__parse_table_index(table)
+                for case in cases:
+                    tds = case.find_all("td")
+                    discussion_url.append(tds[0].find('a').attrs['href'])
+                    match = re.match(r"(\d+)\s*\((\d+)\)", tds[1].string)
+                    if match:
+                        bot = match.group(1)
+                        all = match.group(2)
+                        # print(bot, all)
+                        if bot!=0: 
+                            address=True
+            except:
+                self.logger.error("parse discussion table failed")
+                return None, None
+        else:
+            print("[-] why there are multi discussion table")
+            exit(-1)
+        
+        return discussion_url, address
 
     def __parse_patch(self):
         """
@@ -443,7 +473,7 @@ def check_url(url):
         hash = url[idx:]
         url_flag = 1
     else:
-        print("url format not support")
+        print("[-] url format not support")
         url_flag = 2
         exit(-1)
     return (hash, url_flag)
@@ -466,4 +496,4 @@ if __name__ == "__main__":
         crawler.parse()
         crawler.show()
     else:
-        print("need url link to syzbot")
+        print("[-] need url link to syzbot")
