@@ -223,9 +223,31 @@ class dashCrawler:
 
             print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, patched, closed, patch_commit, patch_depict)
 
+
     def __parse_invalid_table(self, table):
-        pass
+        cases = self.__parse_table_index(table)
+        for idx, case in enumerate(cases):
+            if len(case.find("td", {"class": "stat"}).contents) == 0:
+                tds = case.find_all("td")
+                # for idx,td in enumerate(tds):
+                    # pass
+                    # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
+                title = tds[0].find("a").string
+                url = self.normalize_url(tds[0].find('a').attrs['href'])
+
+                repro = self.normalize_str(tds[1].string)
+
+                cause_bisect = self.normalize_str(tds[2].string)
+                fixed_bisect = self.normalize_str(tds[3].string)
+
+                count = self.normalize_str(tds[4].string)
+                last = self.normalize_str(tds[5].string)
+                reported = self.normalize_str(tds[6].string)
+
+                print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported)
+
 
 if __name__ == "__main__":
-    crawler = dashCrawler("https://syzkaller.appspot.com/upstream/fixed")
-    crawler.parse()
+    # crawler = dashCrawler("https://syzkaller.appspot.com/upstream/fixed")
+    # crawler = dashCrawler("https://syzkaller.appspot.com/upstream/invalid")
+    # crawler.parse()
