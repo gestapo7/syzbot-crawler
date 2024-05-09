@@ -1,20 +1,38 @@
+import os
 import json
 import pickle
 
-class Datastorer():
-    def __init__(self, hash, assets=False):
+class Data:
+    """
+    hash is the only unique id for data
+    """
+    def __init__(self, hash, dst=""):
 
         self.url = ""
         self.title = ""
-        self.patch = ""
-
+        # address to store data in pickle or json format
         if hash is None:
-            print("dataStorer init failed")
+            print("[-] init failed, we need a unique hash for Data.")
             exit(-1)
         else:
             self.hash = hash
-        self.assets = assets
 
+        if not os.path.exists(dst):
+            print("[-] dst do not exist")
+        else:
+            self.dst = dst
+    
+    def __str__(self):
+        return '0'
+    
+    def __repr__(self):
+        return '1'
+
+class DeployData(Data):
+    def __init__(self, hash, assets=False):
+        super.__init__(hash)
+        self.patch = ""
+        self.assets = assets
         self.cases = {}
 
     def prepare(self, idx):
@@ -52,6 +70,11 @@ class Datastorer():
     
     def deserialize():
         pass
+
+class ReproduceData(Data):
+    def __init__(self, hash, assets=False):
+        super.__init__(hash)
+
 
 class Crawler():
     def __init__():
