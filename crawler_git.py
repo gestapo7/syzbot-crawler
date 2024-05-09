@@ -1,3 +1,5 @@
+import re
+import sys
 import requests
 import datetime
 
@@ -14,19 +16,58 @@ class gitInfo():
         self.parent = ""
         self.download = ""
 
+        self.title = ""
         self.logmsg = ""
 
         # extract from logmsg through matching by keyword
-        self.Desrciption = ""
+        self.Desrciption =  ""
+        self.Fixes = []
         self.ReportedBy = []
         self.SignedOffBy = []
-        self.CC = []
+        self.AckedBy = []
+        self.TestedBy = []
+        self.ReviewedBy = []
+        self.Cc = []
     
-    def __str__():
-        pass
+    def __repr__(self):
+        raw = ""
+        raw += "~~~ Commit Info ~~~\n"
+        raw += "author:    {}\n".format(self.author)
+        raw += "committer: {}\n".format(self.committer)
+        raw += "commit:    {}\n".format(self.commit)
+        raw += "tree:      {}\n".format(self.tree)
+        raw += "parent:    {}\n".format(self.parent)
+        raw += "download:  {}\n".format(self.download)
+        raw += "~~~ Commit Log ~~~\n"
+        raw += self.Desrciption
+        raw += "Fixes:     {}\n".format(self.Fixes)
+        raw += "Reported:  {}\n".format(self.ReportedBy)
+        raw += "Cc:        {}\n".format(self.Cc )
+        raw += "SignedOff: {}\n".format(self.SignedOffBy)
+        raw += "Acked:     {}\n".format(self.AckedBy)
+        raw += "Tested:    {}\n".format(self.TestedBy)
+        raw += "Reviewed:  {}\n".format(self.ReviewedBy)
+        return raw
     
-    def __repr__():
-        pass
+    def __str__(self):
+        raw = ""
+        raw += "~~~ Commit Info ~~~\n"
+        raw += "author:    {}\n".format(self.author)
+        raw += "committer: {}\n".format(self.committer)
+        raw += "commit:    {}\n".format(self.commit)
+        raw += "tree:      {}\n".format(self.tree)
+        raw += "parent:    {}\n".format(self.parent)
+        raw += "download:  {}\n".format(self.download)
+        raw += "~~~ Commit Log ~~~\n"
+        raw += self.Desrciption
+        raw += "Fixes:     {}\n".format(self.Fixes)
+        raw += "Reported:  {}\n".format(self.ReportedBy)
+        raw += "Cc:        {}\n".format(self.Cc )
+        raw += "SignedOff: {}\n".format(self.SignedOffBy)
+        raw += "Acked:     {}\n".format(self.AckedBy)
+        raw += "Tested:    {}\n".format(self.TestedBy)
+        raw += "Reviewed:  {}\n".format(self.ReviewedBy)
+        return raw
 
 # WebCrawler for git.kernel.org
 class gitCrawler(Crawler):
@@ -114,11 +155,42 @@ class gitCrawler(Crawler):
                 self.info.tree = self.strip_prefix(tds[3].text, "tree")
                 self.info.parent = self.strip_prefix(tds[4].text, "parent")
                 self.info.download = tds[5].a['href']
-
+        try: 
+            self.info.title = self.soup.find("div", {"class": "commit-subject"}).string
+            self.info.logmsg = self.soup.find("div", {"class": "commit-msg"}).string
+        except:
+            print("[-] wtf, debug ASAP")
+        
+        if self.info.logmsg:
+            self.__parse_logmsg()
+        
         return
+    
+    def __parse_logmsg(self):
+        # print(self.info.logmsg)
+        lines = self.info.logmsg.split("\n")
+        description = [] 
+        for idx, line in enumerate(lines):
+            if line.startswith("Fixes: "):
+                self.info.Fixes.append(self.strip_prefix(line, "Fixes: "))
+            elif line.startswith("Reported-by: "):
+                self.info.ReportedBy.append(self.strip_prefix(line, "Reported-by: "))
+            elif line.startswith("Signed-off-by: "):
+                self.info.SignedOffBy.append(self.strip_prefix(line, "Signed-off-by: "))
+            elif line.startswith("Cc: "):
+                self.info.Cc.append(self.strip_prefix(line, "Cc: "))
+            elif line.startswith("Reviewed-by: "):
+                self.info.ReviewedBy.append(self.strip_prefix(line, "Reviewed-by: "))
+            elif line.startswith("Acked-by: "):
+                self.info.AckedBy.append(self.strip_prefix(line, "Acked-by: "))
+            elif line.startswith("Tested-by: "):
+                self.info.TestedBy.append(self.strip_prefix(line, "Tested-by: "))
+            else:
+                description.append(line)
+            
+        self.info.Desrciption = "\n".join(description)
 
 if __name__ == "__main__":
     gCrawler = gitCrawler(url = "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=d624d276d1ddacbcb12ad96832ce0c7b82cd25db")
     gCrawler.parse()
-    import ipdb; ipdb.set_trace()
-    # print(gCrawler.info)
+    print(gCrawler.info)
