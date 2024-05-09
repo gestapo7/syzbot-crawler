@@ -5,7 +5,7 @@ import collections
 
 from bs4 import BeautifulSoup
 
-from crawler import Datastorer
+from crawler import DeployData,ReproduceData
 
 OPEN = "https://syzkaller.appspot.com/upstream"
 MODERATION = "https://syzkaller.appspot.com/upstream"
@@ -15,6 +15,7 @@ INVALID = "https://syzkaller.appspot.com/upstream/invalid"
 class dashCrawler(Crawler):
     def __init__(self,
                  url,
+                 nested_mode=False,
                  dst=""):
 
         self.url = url
@@ -34,6 +35,8 @@ class dashCrawler(Crawler):
         curr = datetime.datetime.now()
         print('[+] {}'.format(curr.strftime("%y-%m-%d")))
         print('[+] {}'.format(self.url))
+
+        self.nested_mode = nested_mode
         # self.csv = "{0}-{1}.csv".format("open", curr.strftime("%Y-%m-%d"))
     
     def normalize_url(self, url):
@@ -245,8 +248,5 @@ class dashCrawler(Crawler):
                 reported = self.normalize_str(tds[6].string)
 
                 print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported)
-
-# if __name__ == "__main__":
-#     crawler = dashCrawler("https://syzkaller.appspot.com/upstream/fixed")
-#     crawler = dashCrawler("https://syzkaller.appspot.com/upstream/invalid")
-#     crawler.parse()
+    
+    

@@ -10,7 +10,7 @@ from IPython import embed
 from bs4 import BeautifulSoup
 from prettytable import PrettyTable
 
-from crawler import Datastorer
+from crawler import DeployData,ReproduceData
 
 syzbot_host_url = "https://syzkaller.appspot.com/"
 syzbot_bug_id_url = "bug?id="
@@ -29,14 +29,14 @@ class bugCrawler(Crawler):
                  debug = False):
         """_summary_
         Args:
-            data (Datastorer):
+            data (DeployData):
             url (string):
             type (int 0/1):
             debug (bool, default for False):
             assets (bool, default for False):
         """
 
-        if not isinstance(data, Datastorer):
+        if not isinstance(data, DeployData):
             print("data format can't support!")
             exit(-1)
 

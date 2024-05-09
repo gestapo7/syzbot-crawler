@@ -53,5 +53,5 @@ if __name__ == "__main__":
     #     crawler.show()
     # else:
     #     print("[-] need url link to syzbot")
-    crawler = cd.dashCrawler("https://syzkaller.appspot.com/upstream")
-    crawler.parse()
+    dCrawler = cd.dashCrawler("https://syzkaller.appspot.com/upstream/fixed")
+    dCrawler.parse()
