@@ -53,6 +53,6 @@ class Datastorer():
     def deserialize():
         pass
 
-class crawler():
+class Crawler():
     def __init__():
         pass

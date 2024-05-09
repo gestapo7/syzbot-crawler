@@ -20,7 +20,7 @@ supports = {
     1: syzbot_bug_extid_url
 }
 
-class bugCrawler():
+class bugCrawler(Crawler):
     def __init__(self,
                  data,
                  url,

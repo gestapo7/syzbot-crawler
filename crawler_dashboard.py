@@ -12,7 +12,7 @@ MODERATION = "https://syzkaller.appspot.com/upstream"
 FIXED = "https://syzkaller.appspot.com/upstream/fixed"
 INVALID = "https://syzkaller.appspot.com/upstream/invalid"
 
-class dashCrawler:
+class dashCrawler(Crawler):
     def __init__(self,
                  url,
                  dst=""):
@@ -246,8 +246,7 @@ class dashCrawler:
 
                 print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported)
 
-
-if __name__ == "__main__":
-    # crawler = dashCrawler("https://syzkaller.appspot.com/upstream/fixed")
-    # crawler = dashCrawler("https://syzkaller.appspot.com/upstream/invalid")
-    # crawler.parse()
+# if __name__ == "__main__":
+#     crawler = dashCrawler("https://syzkaller.appspot.com/upstream/fixed")
+#     crawler = dashCrawler("https://syzkaller.appspot.com/upstream/invalid")
+#     crawler.parse()
