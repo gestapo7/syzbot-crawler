@@ -8,6 +8,7 @@ import crawler_bug as cb
 import crawler_lkml as cl
 import crawler_dashboard as cd
 
+
 def check_url(url):
     # https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac
     hash = ""
@@ -34,7 +35,6 @@ def check_url(url):
     #     if check_dst(args.dst):
     #         run_one(args)
 
-
 def args_parse():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                      description='Deploy crash cases from syzbot\n')
@@ -53,5 +53,5 @@ if __name__ == "__main__":
     #     crawler.show()
     # else:
     #     print("[-] need url link to syzbot")
-    crawler = cd.uCrawler("https://syzkaller.appspot.com/upstream")
+    crawler = cd.dashCrawler("https://syzkaller.appspot.com/upstream")
     crawler.parse()

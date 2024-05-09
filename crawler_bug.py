@@ -10,6 +10,8 @@ from IPython import embed
 from bs4 import BeautifulSoup
 from prettytable import PrettyTable
 
+from crawler import Datastorer
+
 syzbot_host_url = "https://syzkaller.appspot.com/"
 syzbot_bug_id_url = "bug?id="
 syzbot_bug_extid_url = "bug?extid="
@@ -18,60 +20,7 @@ supports = {
     1: syzbot_bug_extid_url
 }
 
-
-class Datastorer():
-    def __init__(self, hash, assets=False):
-
-        self.url = ""
-        self.title = ""
-        self.patch = ""
-
-        if hash is None:
-            print("dataStorer init failed")
-            exit(-1)
-        else:
-            self.hash = hash
-        self.assets = assets
-
-        self.cases = {}
-
-    def prepare(self, idx):
-        self.cases[idx] = {}
-        # FIX: catalog: running done failed
-        self.cases[idx]['catalog'] = ""
-
-        self.cases[idx]['time'] = None
-        # kernel
-        self.cases[idx]["kernel"] = None
-        self.cases[idx]["commit"] = None
-        self.cases[idx]["is_upstream"] = False
-        self.cases[idx]["config"] = None
-        # syzkaller
-        self.cases[idx]["syzkaller"] = None
-        # compiler
-        self.cases[idx]["gcc"] = None
-        self.cases[idx]['clang'] = None
-        self.cases[idx]['version'] = None
-        # console log
-        self.cases[idx]["log"] = None
-        # crash
-        self.cases[idx]["report"] = None
-        # reproduce
-        self.cases[idx]["syz"] = None
-        self.cases[idx]["cpp"] = None
-        # assets infomation
-        if self.assets:
-            self.cases[idx]["assets"] = {}
-        # manager name
-        self.cases[idx]["manager"] = None
-    
-    def serialize():
-        pass
-    
-    def deserialize():
-        pass
-
-class Crawler():
+class bugCrawler():
     def __init__(self,
                  data,
                  url,
@@ -86,8 +35,7 @@ class Crawler():
             debug (bool, default for False):
             assets (bool, default for False):
         """
-        import ipdb; ipdb.set_trace();
-    
+
         if not isinstance(data, Datastorer):
             print("data format can't support!")
             exit(-1)
