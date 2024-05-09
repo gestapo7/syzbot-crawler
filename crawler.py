@@ -1,4 +1,5 @@
 import json
+import pickle
 
 class Datastorer():
     def __init__(self, hash, assets=False):

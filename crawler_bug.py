@@ -96,7 +96,8 @@ class bugCrawler():
             # max_retries = 5
             while True:
                 try:
-                    req = requests.get(url=url, timeout=5)
+                    # req = requests.get(url=url, timeout=5)
+                    req = requests.Session().get(url=self.url, timeout=5)
                     req.raise_for_status()
                     self.soup = BeautifulSoup(req.text, "html.parser")
 
