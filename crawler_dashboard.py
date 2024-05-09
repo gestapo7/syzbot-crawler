@@ -197,7 +197,7 @@ class dashCrawler:
             title = tds[0].find("a").string
             url = self.normalize_url(tds[0].find('a').attrs['href'])
 
-            repro = tds[1].string.strip()
+            repro = self.normalize_str(tds[1].string)
             # bisection infos
             cause_bisect = self.normalize_str(tds[2].string)
             fixed_bisect = self.normalize_str(tds[3].string)
@@ -212,8 +212,14 @@ class dashCrawler:
             # TODO: patch parser
             cnt = tds[9].find("span", {"class":"mono"})
             if cnt:
-                patch_commit = cnt.a['href']
-                patch_depict = self.normalize_str(cnt.a.string)
+                try:
+                    patch_commit = cnt.a['href']
+                except TypeError:
+                    # TODO: use description to find in git.kernel.org
+                    patch_commit = None
+                    patch_depict = cnt.string
+                else:
+                    patch_depict = self.normalize_str(cnt.a.string)
 
             print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, patched, closed, patch_commit, patch_depict)
 
