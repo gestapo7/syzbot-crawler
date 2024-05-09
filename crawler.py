@@ -75,6 +75,10 @@ class ReproduceData(Data):
     def __init__(self, hash, assets=False):
         super.__init__(hash)
 
+class AssessData(Data):
+    def __init__(self, hash, assets=False):
+        super.__init__(hash)
+
 
 class Crawler():
     def __init__():
