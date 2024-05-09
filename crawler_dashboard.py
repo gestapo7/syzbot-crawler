@@ -50,16 +50,17 @@ class dashCrawler:
             exit(-1)
 
         tables = self.parse_table()
-        if len(tables) > 1:
+        import ipdb; ipdb.set_trace();
+        if len(tables) >= 1:
             for _, table in enumerate(tables):
                 if table.caption is not None:
                     if table.caption.find("a", {"class", "plain"}) is not None:
                         # open table
-                        if table.caption.find("a", {"class", "plain"}).contents[0].find("open") >= 0:
+                        if "open" in table.caption.find("a", {"class":"plain"}).string.strip():
                             self.parse_open_table(table)
                         # moderation table
-                        if table.caption.find("a", {"class", "plain"}).contents[0].find("moderation") >= 0:
-                            self.parse_moderation_table(table, "moderation")
+                        if "moderation" in table.caption.find("a", {"class", "plain"}).string.strip():
+                            self.parse_moderation_table(table)
 
         elif len(tables) == 1:
             self.parse_crash_table(tables[0], self.url[str.rfind(self.url, "/") + 1:])
@@ -114,7 +115,32 @@ class dashCrawler:
         # fd.close()
 
     def parse_moderation_table(self, table):
-        return
+        cases = self.parse_table_index(table)
+        # with open(os.path.join(self.dst, self.csv), 'w') as fd:
+            # newfd = csv.writer(fd)
+        for idx, case in enumerate(cases):
+            if len(case.find("td", {"class": "stat"}).contents) == 0:
+                tds = case.find_all("td")
+                # for idx,td in enumerate(tds):
+                    # pass
+                    # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
+                title = tds[0].find("a").string
+                url = self.normalize_url(tds[0].find('a').attrs['href'])
+
+                repro = tds[1].string
+
+                cause_bisect = tds[2].string
+                fixed_bisect = tds[3].string
+
+                count = tds[4].string
+                last = tds[5].string
+                reported = tds[6].string
+
+                # TODO: discussion parser
+                discussion = tds[7].attrs
+
+                print(idx, repro, cause_bisect, fixed_bisect, count, last, reported, discussion)
+
         # cases = self.parse_table_index(table)
         # with open(os.path.join(self.dst, self.csv), 'w') as fd:
             # newfd = csv.writer(fd)
