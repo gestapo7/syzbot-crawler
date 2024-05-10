@@ -79,6 +79,24 @@ class AssessData(Data):
     def __init__(self, hash, assets=False):
         super.__init__(hash)
 
+        # the bug is highrisk or lowrisk (true or false)
+        self.highrisk = False
+        # addressed by developer (true or false)
+        self.address = False
+        # reproduced revokled by finder (true or false)
+        self.revokled = False
+        # the bug has reproducer (true or false)
+        self.reproduced = False
+        # reproduce instance number
+        self.r_count = 0
+        # address time
+        self.a_time = 0
+        # fixed time
+        self.f_time = 0
+        # stable fixed time, downstreams fixed time
+        self.s_time = 0
+        # close time, if not close, time=-1
+        self.c_time = 0
 
 class Crawler():
     def __init__():
