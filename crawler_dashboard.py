@@ -5,17 +5,44 @@ import collections
 
 from bs4 import BeautifulSoup
 
-from crawler import DeployData,ReproduceData
+from crawler import DeployData,ReproduceData,AssessData
+from crawler import Crawler
+
+import crawler_bug as cb
+import crawler_git as cg
+import crawler_lkml as cl
+import crawler_dashboard as cd
 
 OPEN = "https://syzkaller.appspot.com/upstream"
 MODERATION = "https://syzkaller.appspot.com/upstream"
 FIXED = "https://syzkaller.appspot.com/upstream/fixed"
 INVALID = "https://syzkaller.appspot.com/upstream/invalid"
 
+
+def check_url(url):
+    # https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac
+    hash = ""
+    if url.__contains__("bug?id="):
+        idx = url.index("bug?id=") + len("bug?id=")
+        hash = url[idx:]
+        url_flag = 0
+    # https://syzkaller.appspot.com/bug?extid=dcc068159182a4c31ca3
+    elif url.__contains__("?extid="):
+        # test for https://syzkaller.appspot.com/bug?extid=60db9f652c92d5bacba4
+        idx = url.index("?extid=") + len("?extid=")
+        hash = url[idx:]
+        url_flag = 1
+    else:
+        print("[-] url format not support")
+        url_flag = 2
+        exit(-1)
+    return (hash, url_flag)
+
 class dashCrawler(Crawler):
     def __init__(self,
                  url,
-                 nested_mode=False,
+                 data=None,
+                 nested=False,
                  dst=""):
 
         self.url = url
@@ -26,9 +53,10 @@ class dashCrawler(Crawler):
             print("url is invalid, please check")
             exit(-1)
 
-        self.cases = {}
+        self.data = data
         # origin website
         self.soup = None
+        self.cases = {}
 
         self.dst = dst
 
@@ -36,7 +64,14 @@ class dashCrawler(Crawler):
         print('[+] {}'.format(curr.strftime("%y-%m-%d")))
         print('[+] {}'.format(self.url))
 
-        self.nested_mode = nested_mode
+        self.nested_mode = False
+        if isinstance(data, AssessData):
+            self.nested = True
+        
+        self.open_table = []
+        self.fixed_table = []
+        self.invalid_table = []
+        self.moderation_table = []
         # self.csv = "{0}-{1}.csv".format("open", curr.strftime("%Y-%m-%d"))
     
     def normalize_url(self, url):
@@ -47,6 +82,24 @@ class dashCrawler(Crawler):
             return s.strip()
         else:
             return s
+    
+    def assess_parse_open(self):
+        if isinstance(self.data, AssessData):
+            return
+        
+        # cb.bugCrawler(url=table[1])
+        
+        
+        print(self.open_table)
+    
+    def assess_parse_moderation(self, table):
+        pass
+    
+    def assess_parse_fixed(self, table):
+        pass
+    
+    def assess_parse_invalid(self, table):
+        pass
 
     def parse(self):
         if self.url is None:
@@ -114,40 +167,40 @@ class dashCrawler(Crawler):
 
 
     def __parse_open_table(self, table):
-        cases = self.parse_table_index(table)
+        cases = self.__parse_table_index(table)
         # with open(os.path.join(self.dst, self.csv), 'w') as fd:
             # newfd = csv.writer(fd)
+        self.open_table = []
         for idx, case in enumerate(cases):
             if len(case.find("td", {"class": "stat"}).contents) == 0:
                 tds = case.find_all("td")
                 # for idx,td in enumerate(tds):
-                    # pass
                     # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
-                title = tds[0].find("a").string
-                url = self.normalize_url(tds[0].find('a').attrs['href'])
+                try:
+                    title = tds[0].find("a").string
+                    url = self.normalize_url(tds[0].find('a').attrs['href'])
+                    repro = tds[1].string
+                    cause_bisect = tds[2].string
+                    fixed_bisect = tds[3].string
+                    count = tds[4].string
+                    last = tds[5].string
+                    reported = tds[6].string
+                    discussions = tds[7].text if tds[7].text is not None else ''
+                    self.open_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
+                except Exception as e:
+                    print("wtf man, {0}".format(e))
+                    exit(-1)
 
-                repro = tds[1].string
+                self.assess_parse_open()
+                # print(url, title)
+                # for every in  case.find_all("td", {"class": "stat"}):
+                #     print(every)
+                # newfd.writerow([idx, title, url])
 
-                cause_bisect = tds[2].string
-                fixed_bisect = tds[3].string
-
-                count = tds[4].string
-                last = tds[5].string
-                reported = tds[6].string
-
-                # TODO: discussion parser
-                discussion = tds[7].attrs
-
-                print(idx, repro, cause_bisect, fixed_bisect, count, last, reported, discussion)
-
-                    # print(url, title)
-                    # for every in  case.find_all("td", {"class": "stat"}):
-                    #     print(every)
-                    # newfd.writerow([idx, title, url])
         # fd.close()
 
     def __parse_moderation_table(self, table):
-        cases = self.parse_table_index(table)
+        cases = self.__parse_table_index(table)
         # with open(os.path.join(self.dst, self.csv), 'w') as fd:
             # newfd = csv.writer(fd)
         for idx, case in enumerate(cases):
@@ -156,20 +209,20 @@ class dashCrawler(Crawler):
                 # for idx,td in enumerate(tds):
                     # pass
                     # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
-                title = tds[0].find("a").string
-                url = self.normalize_url(tds[0].find('a').attrs['href'])
-
-                repro = self.normalize_str(tds[1].string)
-
-                cause_bisect = tds[2].string
-                fixed_bisect = tds[3].string
-
-                count = tds[4].string
-                last = tds[5].string
-                reported = tds[6].string
-
-                # TODO: discussion parser
-                discussion = tds[7].attrs
+                try:
+                    title = tds[0].find("a").string
+                    url = self.normalize_url(tds[0].find('a').attrs['href'])
+                    repro = self.normalize_str(tds[1].string)
+                    cause_bisect = tds[2].string
+                    fixed_bisect = tds[3].string
+                    count = tds[4].string
+                    last = tds[5].string
+                    reported = tds[6].string
+                    # TODO: discussion parser
+                    discussions = tds[7].text if tds[7].text is not None else ''
+                except Exception as e:
+                    print("wtf man, {0}".format(e))
+                    exit(-1)
 
                 print(idx, repro, cause_bisect, fixed_bisect, count, last, reported, discussion)
 
@@ -199,17 +252,13 @@ class dashCrawler(Crawler):
 
             title = tds[0].find("a").string
             url = self.normalize_url(tds[0].find('a').attrs['href'])
-
             repro = self.normalize_str(tds[1].string)
             # bisection infos
             cause_bisect = self.normalize_str(tds[2].string)
             fixed_bisect = self.normalize_str(tds[3].string)
-
             count = int(tds[4].string)
-
             last = self.normalize_str(tds[5].string)
             reported = self.normalize_str(tds[6].string)
-
             patched = self.normalize_str(tds[7].string)
             closed = self.normalize_str(tds[8].string)
             # TODO: patch parser
@@ -237,16 +286,10 @@ class dashCrawler(Crawler):
                     # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
                 title = tds[0].find("a").string
                 url = self.normalize_url(tds[0].find('a').attrs['href'])
-
                 repro = self.normalize_str(tds[1].string)
-
                 cause_bisect = self.normalize_str(tds[2].string)
                 fixed_bisect = self.normalize_str(tds[3].string)
-
                 count = self.normalize_str(tds[4].string)
                 last = self.normalize_str(tds[5].string)
                 reported = self.normalize_str(tds[6].string)
-
                 print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported)
-    
-    

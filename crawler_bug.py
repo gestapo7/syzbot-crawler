@@ -10,7 +10,8 @@ from IPython import embed
 from bs4 import BeautifulSoup
 from prettytable import PrettyTable
 
-from crawler import DeployData,ReproduceData
+from crawler import Crawler
+from crawler import DeployData,ReproduceData,AssessData
 
 syzbot_host_url = "https://syzkaller.appspot.com/"
 syzbot_bug_id_url = "bug?id="
@@ -22,9 +23,9 @@ supports = {
 
 class bugCrawler(Crawler):
     def __init__(self,
-                 data,
                  url,
                  type,
+                 data = None,
                  max = 0,
                  debug = False):
         """_summary_

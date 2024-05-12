@@ -89,11 +89,11 @@ class AssessData(Data):
         self.reproduced = False
         # reproduce instance number
         self.r_count = 0
-        # address time
+        # address time, if not address, time=-1
         self.a_time = 0
-        # fixed time
+        # fixed time, if not fixed, time=-1
         self.f_time = 0
-        # stable fixed time, downstreams fixed time
+        # downstreams fixed time, if not fixed, time=-1
         self.s_time = 0
         # close time, if not close, time=-1
         self.c_time = 0
