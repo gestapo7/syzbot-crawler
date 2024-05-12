@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from prettytable import PrettyTable
 
 from crawler import Crawler
-from crawler import DeployData,ReproduceData,AssessData
+from crawler import BugData,DeployData,ReproduceData,AssessData
 
 syzbot_host_url = "https://syzkaller.appspot.com/"
 syzbot_bug_id_url = "bug?id="
@@ -25,7 +25,7 @@ class bugCrawler(Crawler):
     def __init__(self,
                  url,
                  type,
-                 data = None,
+                 data,
                  max = 0,
                  debug = False):
         """_summary_
@@ -37,7 +37,7 @@ class bugCrawler(Crawler):
             assets (bool, default for False):
         """
 
-        if not isinstance(data, DeployData):
+        if not isinstance(data, BugData):
             print("data format can't support!")
             exit(-1)
 
@@ -98,7 +98,7 @@ class bugCrawler(Crawler):
             while True:
                 try:
                     # req = requests.get(url=url, timeout=5)
-                    req = requests.Session().get(url=self.url, timeout=5)
+                    req = requests.Session().get(url=self.data.url, timeout=5)
                     req.raise_for_status()
                     self.soup = BeautifulSoup(req.text, "html.parser")
 
@@ -240,10 +240,13 @@ class bugCrawler(Crawler):
                 self.__parse_log_from_case(idx, case)
                 self.__parse_manager_from_case(idx, case)
                 self.__parse_time_from_case(idx, case)
-                if self.data.assets:
-                    self.__parse_assets_from_case(idx, case)
-        except:
-            self.logger.error("parse crash table failed")
+
+                # TODO: revoke data.assets
+                # if self.data.assets:
+                    # self.__parse_assets_from_case(idx, case)
+                return True
+        except Exception as e:
+            self.logger.error("parse crash table failed: {0}".format(e))
             return False
         # we assume every vulnerability record will contain at least entry which can satisfy our demands
         # let user choice which is better ?

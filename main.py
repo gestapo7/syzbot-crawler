@@ -8,6 +8,8 @@ import crawler_bug as cb
 import crawler_lkml as cl
 import crawler_dashboard as cd
 
+from crawler import Data,DeployData,ReproduceData,AssessData
+
 def check_url(url):
     # https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac
     hash = ""
@@ -52,5 +54,7 @@ if __name__ == "__main__":
     #     crawler.show()
     # else:
     #     print("[-] need url link to syzbot")
-    dCrawler = cd.dashCrawler("https://syzkaller.appspot.com/upstream")
+    # import ipdb;ipdb.set_trace();
+    ad = AssessData()
+    dCrawler = cd.dashCrawler("https://syzkaller.appspot.com/upstream", data=ad)
     dCrawler.parse()

@@ -5,7 +5,7 @@ import collections
 
 from bs4 import BeautifulSoup
 
-from crawler import DeployData,ReproduceData,AssessData
+from crawler import BugData,DeployData,ReproduceData,AssessData
 from crawler import Crawler
 
 import crawler_bug as cb
@@ -13,11 +13,11 @@ import crawler_git as cg
 import crawler_lkml as cl
 import crawler_dashboard as cd
 
+VALID_URLS = ""
 OPEN = "https://syzkaller.appspot.com/upstream"
 MODERATION = "https://syzkaller.appspot.com/upstream"
 FIXED = "https://syzkaller.appspot.com/upstream/fixed"
 INVALID = "https://syzkaller.appspot.com/upstream/invalid"
-
 
 def check_url(url):
     # https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac
@@ -41,6 +41,7 @@ def check_url(url):
 class dashCrawler(Crawler):
     def __init__(self,
                  url,
+                 mode=0,
                  data=None,
                  nested=False,
                  dst=""):
@@ -75,7 +76,7 @@ class dashCrawler(Crawler):
         # self.csv = "{0}-{1}.csv".format("open", curr.strftime("%Y-%m-%d"))
     
     def normalize_url(self, url):
-        return "https://syzkaller.appspot.com/" + url
+        return "https://syzkaller.appspot.com" + url
     
     def normalize_str(self, s):
         if s:
@@ -84,13 +85,25 @@ class dashCrawler(Crawler):
             return s
     
     def assess_parse_open(self):
-        if isinstance(self.data, AssessData):
+        if not isinstance(self.data, AssessData):
             return
-        
+
         # cb.bugCrawler(url=table[1])
-        
-        
         print(self.open_table)
+        try:
+            for idx,cnt in enumerate(self.open_table):
+                print(idx, cnt[0])
+                title = cnt[0]
+                url = cnt[1]
+                hash, url_flag = check_url(url)
+
+                data = BugData(hash)
+                bug = cb.bugCrawler(url=url, type=url_flag, data=data)
+                bug.parse()
+                bug.show()
+
+        except KeyboardInterrupt:
+            exit(-1)
     
     def assess_parse_moderation(self, table):
         pass
@@ -187,10 +200,12 @@ class dashCrawler(Crawler):
                     reported = tds[6].string
                     discussions = tds[7].text if tds[7].text is not None else ''
                     self.open_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
+                    print(title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
                 except Exception as e:
                     print("wtf man, {0}".format(e))
                     exit(-1)
 
+                import ipdb; ipdb.set_trace();
                 self.assess_parse_open()
                 # print(url, title)
                 # for every in  case.find_all("td", {"class": "stat"}):
@@ -224,7 +239,9 @@ class dashCrawler(Crawler):
                     print("wtf man, {0}".format(e))
                     exit(-1)
 
-                print(idx, repro, cause_bisect, fixed_bisect, count, last, reported, discussion)
+                # print(idx, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
+                # import ipdb; ipdb.set_trace();
+                # self.assess_parse_open()
 
         # cases = self.parse_table_index(table)
         # with open(os.path.join(self.dst, self.csv), 'w') as fd:
