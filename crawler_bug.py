@@ -248,12 +248,18 @@ class bugCrawler(Crawler):
         if cause_bisection:
             cause = cause_bisection.find('b').string
             if cause == "Cause bisection: introduced by":
-                cause_bisection_url = cause_bisection.find('br').find('a').attrs['href']
+                try:
+                    cause_bisection_url = cause_bisection.find('br').find('a').attrs['href']
+                except AttributeError:
+                    cause_bisection_url = cause_bisection.find('br').find('a')
 
         if fixed_bisection:
             fixed = fixed_bisection.find('b').string
             if fixed == "Fix bisection: fixed by":
-                fixed_bisection_url = fixed_bisection.find('br').find('a').attrs['href']
+                try:
+                    fixed_bisection_url = fixed_bisection.find('br').find('a').attrs['href']
+                except AttributeError:
+                    fixed_bisection_url = fixed_bisection.find('br').find('a')
 
         return cause_bisection_url, fixed_bisection_url
 

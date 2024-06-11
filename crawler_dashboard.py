@@ -175,8 +175,8 @@ class dashCrawler(Crawler):
                             # moderation table
                             if "moderation" in table.caption.find("a", {"class", "plain"}).string.strip():
                                 self.__parse_moderation_table(table)
-                if self.nested:
-                    self.parse_nested(save=True)
+            if self.nested:
+                self.parse_nested(save=True)
 
             else:
                 print("table is none. please check your dashboard url!")
@@ -184,19 +184,25 @@ class dashCrawler(Crawler):
 
         elif self.url == FIXED:
             tables = self.__parse_table()
-            if len(tables) == 1:
-                self.__parse_fixed_table(tables[0])
+            if tables:
+                if len(tables) == 1:
+                    self.__parse_fixed_table(tables[0])
 
                 if self.nested:
                     self.parse_nested(save=True)
+            else:
+                print("parse table failed")
 
         elif self.url == INVALID:
             tables = self.__parse_table()
-            if len(tables) == 1:
-                self.__parse_invalid_table(tables[0])
+            if tables:
+                if len(tables) == 1:
+                    self.__parse_invalid_table(tables[0])
 
                 if self.nested:
                     self.parse_nested(save=True)
+            else:
+                print("parse table failed")
 
         else:
             print("invalid url")
@@ -210,13 +216,16 @@ class dashCrawler(Crawler):
 
     def __parse_table(self):
         tables = self.soup.find_all('table', {'class': 'list_table'})
-        if len(tables) == 0:
-            print("[-] failed to retrieve bug cases from soup")
-            return None
-        else:
-            print("[+] soup contains {} tables".format(len(tables)))
-        return tables
-
+        try:
+            if len(tables) == 0:
+                print("[-] failed to retrieve bug cases from soup")
+                return None
+            else:
+                print("[+] soup contains {} tables".format(len(tables)))
+            return tables
+        except Exception as e:
+            print("parse table failed: {0}".format(e));
+            exit(-1)
 
     def __parse_table_index(self, table):
         cases = table.tbody.find_all('tr')
@@ -282,7 +291,7 @@ class dashCrawler(Crawler):
                 reported = tds[6].string
                 # TODO: discussion parser
                 discussions = tds[7].text if tds[7].text is not None else ''
-                self.moderation_table.append([idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
+                self.moderation_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
                 print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
             except Exception as e:
                 print("wtf man, {0}".format(e))
@@ -294,6 +303,7 @@ class dashCrawler(Crawler):
         cases = self.__parse_table_index(table)
         # with open(os.path.join(self.dst, self.csv), 'w') as fd:
             # newfd = csv.writer(fd)
+        self.fixed_table = []
         for idx, case in enumerate(cases):
             tds = case.find_all("td")
 
@@ -319,11 +329,12 @@ class dashCrawler(Crawler):
                     patch_depict = cnt.string
                 else:
                     patch_depict = self.normalize_str(cnt.a.string)
-
+            self.fixed_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, patched, closed, patch_commit, patch_depict])
             print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, patched, closed, patch_commit, patch_depict)
 
     def __parse_invalid_table(self, table):
         cases = self.__parse_table_index(table)
+        self.invalid_table = []
         for idx, case in enumerate(cases):
             # if len(case.find("td", {"class": "stat"}).contents) == 0:
             tds = case.find_all("td")
@@ -335,5 +346,7 @@ class dashCrawler(Crawler):
             count = self.normalize_str(tds[4].string)
             last = self.normalize_str(tds[5].string)
             reported = self.normalize_str(tds[6].string)
+
+            self.invalid_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported])
             print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported)
 
