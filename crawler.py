@@ -84,6 +84,7 @@ class BugData(Data):
         super(BugData, self).__init__(hash)
         self.patch = ""
         self.assets = False
+        self.repro = False
         self.cases = {}
 
     def prepare(self, idx):

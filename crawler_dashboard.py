@@ -128,7 +128,7 @@ class dashCrawler(Crawler):
                                     data=data)
                 bug.parse()
                 bug.show()
-                bug.save(dst="/home/spark/ESCAPE/yome-syzbots/open")
+                bug.save(dst="/home/spark/ESCAPE/yome-syzbots/open", repro=True, save_log=True)
 
         except KeyboardInterrupt:
             exit(-1)

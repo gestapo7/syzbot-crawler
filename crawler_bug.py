@@ -23,6 +23,11 @@ supports = {
     1: syzbot_bug_extid_url
 }
 
+
+# REPRO TAG
+REPRO_SUCCESS = "1"
+REPRO_FAILED = "0"
+
 class bugCrawler(Crawler):
     def __init__(self,
                  url,
@@ -139,13 +144,71 @@ class bugCrawler(Crawler):
             print("[-] table is none.")
             exit(-1)
 
-    def save(self, dst=""):
+    def save(self, dst, repro=False, save_bug=False, save_log=False):
+        """
+        repro:
+        save_bug:
+        save_log:
+        """
+
         if not os.path.exists(dst):
             print("bug saves {0} don't exists".format(dst))
             os.makedirs(dst)
-        print(self.data.title)
-        print(self.data.hash)
-        import ipdb;ipdb.set_trace();
+
+        folder = os.path.join(dst, self.data.hash)
+
+        if repro:
+            if self.data.repro:
+                folder = folder + "-" + REPRO_SUCCESS
+            else:
+                folder = folder + "-" + REPRO_FAILED
+
+        if not os.path.exists(folder):
+            print("create folder {0}".format(folder))
+            os.makedirs(folder)
+
+        if save_log:
+            ignore = self.__save_logs(folder, repro=repro)
+            if ignore:
+                print("save logs done")
+
+    def __save_log(self, dst, idx):
+        if not dst:
+            log_path = os.path.join(dst, 'log')
+        else:
+            log_path = ""
+        req = requests.request(method='GET', url=self.data.cases[idx]['log'])
+        with open(log_path, "wb") as fd:
+            fd.write(req.text.encode())
+        return True
+
+    def __save_logs(self, dst, repro=False):
+        # TODO: add multiprocess for this deploy prograss
+        for idx, case in self.data.cases.items():
+            if not os.path.exists(os.path.join(dst, 'log{}'.format(idx))):
+                # FIXME: add reconnect for request in this part
+                # retries = 0
+                # max_retries = 5
+                while True:
+                    try:
+                        req = requests.request(method='GET', url=case['log'], timeout=5)
+                        req.raise_for_status()
+                        if repro:
+                            log = os.path.join(dst, 'log{}'.format(idx))
+                        else:
+                            log = os.path.join(dst, 'log{}'.format(idx))
+                        if req.text:
+                            print("downloading log{0} for {1} bytes".format(idx, len(req.text)))
+                            with open(log, "wb") as fd:
+                                fd.write(req.text.encode())
+                            break
+                    except requests.RequestException as e:
+                        delay = random.uniform(0, 5)
+                        print("Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
+                        time.sleep(delay)
+                        # retries = retries+1
+        return True
+
 
     def __parse_title(self):
         title = self.soup.body.b.contents[0]
@@ -343,6 +406,7 @@ class bugCrawler(Crawler):
                 try:
                     syz = prefix + syz.contents[0].attrs['href']
                     print("[+] syz_repro: ", syz)
+                    self.data.repro = True
                 except AttributeError:
                     syz = None
                 self.data.cases[idx]['syz'] = syz
@@ -351,6 +415,7 @@ class bugCrawler(Crawler):
                 try:
                     cpp = prefix + cpp.contents[0].attrs['href']
                     print("[+] cpp_repro: ", cpp)
+                    self.data.repro = True
                 except AttributeError:
                     cpp = None
                 self.data.cases[idx]['cpp'] = cpp
