@@ -1,5 +1,7 @@
 import os
 import json
+import time
+import random
 import datetime
 import requests
 import collections
@@ -155,8 +157,29 @@ class dashCrawler(Crawler):
             print('invalid url')
             exit(-1)
 
+        retries = 0
+        max = 100
+        while True:
+            try:
+                # req = requests.get(url=url, timeout=5)
+                req = requests.Session().get(url=self.url, timeout=30)
+                req.raise_for_status()
+
+                if not req.text:
+                    print("request boby is none, try again")
+                else:
+                    print("request boby contains {0} bytes".format(len(req.text)))
+                    break
+            except requests.RequestException as e:
+                delay = random.uniform(0, 5)
+                retries = retries+1
+                print("Request failed {0}: {1}. \nRetrying in {2} seconds...".format(retries, e, delay))
+                time.sleep(delay)
+                if retries >= max:
+                    break
+
         # FIXME: quick request with session
-        req = requests.Session().get(url=self.url)
+        # req = requests.Session().get(url=self.url)
         # req = requests.request(method='GET', url=self.url)
         self.soup = BeautifulSoup(req.text, "html.parser")
         if not self.soup:
