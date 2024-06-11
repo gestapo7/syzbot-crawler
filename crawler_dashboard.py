@@ -7,18 +7,12 @@ import collections
 from bs4 import BeautifulSoup
 
 from crawler import BugData,DeployData,ReproduceData,AssessData
-from crawler import Crawler
+from crawler import Crawler,OPEN,MODERATION,FIXED,INVALID
 
 import crawler_bug as cb
 import crawler_git as cg
 import crawler_lkml as cl
 import crawler_dashboard as cd
-
-VALID_URLS = ""
-OPEN = "https://syzkaller.appspot.com/upstream"
-MODERATION = "https://syzkaller.appspot.com/upstream"
-FIXED = "https://syzkaller.appspot.com/upstream/fixed"
-INVALID = "https://syzkaller.appspot.com/upstream/invalid"
 
 def check_url(url):
     """
@@ -68,8 +62,14 @@ class dashCrawler(Crawler):
 
         self.url = url
 
-        if url in (OPEN, MODERATION, FIXED, INVALID):
-            pass
+        if url == OPEN:
+            self.type = "O"
+        elif url == MODERATION:
+            self.type = "M"
+        elif url == FIXED:
+            self.type = "F"
+        elif url == INVALID:
+            self.type = "I"
         else:
             print("url is invalid, please check")
             exit(-1)
@@ -85,7 +85,7 @@ class dashCrawler(Crawler):
         print('[+] {}'.format(curr.strftime("%y-%m-%d")))
         print('[+] {}'.format(self.url))
 
-        self.nested_mode = False
+        self.nested = nested
 
         if isinstance(data, AssessData):
             self.nested = True
@@ -93,6 +93,8 @@ class dashCrawler(Crawler):
         if isinstance(data, BugData):
             self.nested = True
 
+
+        self.dashboard_table = []
         self.open_table = []
         self.fixed_table = []
         self.invalid_table = []
@@ -108,11 +110,8 @@ class dashCrawler(Crawler):
         else:
             return s
 
-    def parse_open(self):
-        # if not isinstance(self.data, AssessData):
-        #     return
-
-        # cb.bugCrawler(url=table[1])
+    # TODO: nested parse handle
+    def parse_nested(self, save=False):
         print(self.open_table)
         try:
             for idx,cnt in enumerate(self.open_table):
@@ -191,8 +190,6 @@ class dashCrawler(Crawler):
         if not os.path.exists(dst):
             print("dst don't exists")
             exit(-1)
-        import ipdb;ipdb.set_trace();
-
 
     def __parse_table(self):
         tables = self.soup.find_all('table', {'class': 'list_table'})
@@ -241,13 +238,7 @@ class dashCrawler(Crawler):
                     exit(-1)
 
         if self.nested:
-            self.parse_open()
-                # print(url, title)
-                # for every in  case.find_all("td", {"class": "stat"}):
-                #     print(every)
-                # newfd.writerow([idx, title, url])
-
-        # fd.close()
+            self.parse_nested()
 
     def __parse_moderation_table(self, table):
         cases = self.__parse_table_index(table)
@@ -273,22 +264,8 @@ class dashCrawler(Crawler):
                 except Exception as e:
                     print("wtf man, {0}".format(e))
                     exit(-1)
-
-                # print(idx, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
-                # self.assess_parse_open()
-
-        # cases = self.parse_table_index(table)
-        # with open(os.path.join(self.dst, self.csv), 'w') as fd:
-            # newfd = csv.writer(fd)
-        # for idx, case in enumerate(cases):
-            # if len(case.find("td", {"class": "stat"}).contents) == 0:
-                # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
-                # title = case.find("td", {"class": "title"}).find("a").contents[0]
-                # print(url, title)
-                    # for every in  case.find_all("td", {"class": "stat"}):
-                    #     print(every)
-                    # newfd.writerow([idx, title, url])
-        # fd.close()
+        if self.nested:
+            self.parse_nested()
 
     def __parse_fixed_table(self, table):
         cases = self.__parse_table_index(table)
@@ -326,6 +303,8 @@ class dashCrawler(Crawler):
 
             print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, patched, closed, patch_commit, patch_depict)
 
+        if self.nested:
+            self.parse_nested()
 
     def __parse_invalid_table(self, table):
         cases = self.__parse_table_index(table)
@@ -344,3 +323,7 @@ class dashCrawler(Crawler):
                 last = self.normalize_str(tds[5].string)
                 reported = self.normalize_str(tds[6].string)
                 print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported)
+
+
+        if self.nested:
+            self.parse_nested()

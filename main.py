@@ -45,6 +45,7 @@ def args_parse():
     return args
 
 if __name__ == "__main__":
+    args_parse()
     # print(sys.argv)
     # if len(sys.argv) == 2:
     #     url = sys.argv[1]

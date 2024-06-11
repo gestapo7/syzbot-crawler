@@ -2,6 +2,11 @@ import os
 import json
 import pickle
 
+OPEN = "https://syzkaller.appspot.com/upstream"
+MODERATION = "https://syzkaller.appspot.com/upstream"
+FIXED = "https://syzkaller.appspot.com/upstream/fixed"
+INVALID = "https://syzkaller.appspot.com/upstream/invalid"
+
 class Data(object):
     """
     hash is the only unique id for data
