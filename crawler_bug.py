@@ -1,6 +1,8 @@
 import re
+import os
 import sys
 import time
+import shutil
 import random
 import logging
 import requests
@@ -11,7 +13,7 @@ from bs4 import BeautifulSoup
 from prettytable import PrettyTable
 
 from crawler import Crawler
-from crawler import BugData,DeployData,ReproduceData,AssessData
+from crawler import BugData
 
 syzbot_host_url = "https://syzkaller.appspot.com/"
 syzbot_bug_id_url = "bug?id="
@@ -24,6 +26,7 @@ supports = {
 class bugCrawler(Crawler):
     def __init__(self,
                  url,
+                 title,
                  type,
                  data,
                  max = 0,
@@ -47,6 +50,7 @@ class bugCrawler(Crawler):
         self.type = type
 
         self.data.url = url
+        self.data.title = title
 
         self.max = max
 
@@ -134,6 +138,14 @@ class bugCrawler(Crawler):
         else:
             print("[-] table is none.")
             exit(-1)
+
+    def save(self, dst=""):
+        if not os.path.exists(dst):
+            print("bug saves {0} don't exists".format(dst))
+            os.makedirs(dst)
+        print(self.data.title)
+        print(self.data.hash)
+        import ipdb;ipdb.set_trace();
 
     def __parse_title(self):
         title = self.soup.body.b.contents[0]
@@ -244,11 +256,13 @@ class bugCrawler(Crawler):
                 # TODO: revoke data.assets
                 # if self.data.assets:
                     # self.__parse_assets_from_case(idx, case)
-                return True
+
+            # whatever true!
+            return True
         except Exception as e:
             self.logger.error("parse crash table failed: {0}".format(e))
             return False
-        # we assume every vulnerability record will contain at least entry which can satisfy our demands
+        # we assume every bug will contain at least one entry which satisfy us?
         # let user choice which is better ?
     def __parse_table_index(self, table):
         # FIXME: consider this is no upstream kernel crash
@@ -310,24 +324,36 @@ class bugCrawler(Crawler):
             log,report,syz,cpp,_ = case.find_all("td", {"class": "repro"})
 
             if log.contents:
-                log = prefix + log.contents[0].attrs['href']
+                try:
+                    log = prefix + log.contents[0].attrs['href']
+                    print("[+] console_log: ", log)
+                except AttributeError:
+                    log = None
                 self.data.cases[idx]['log'] = log
-                print("[+] console_log: ", log)
 
             if report.contents:
-                report = prefix + report.contents[0].attrs['href']
+                try:
+                    report = prefix + report.contents[0].attrs['href']
+                    print("[+] report: ", report)
+                except AttributeError:
+                    report = None
                 self.data.cases[idx]['report'] = report
-                print("[+] report: ", report)
 
             if syz.contents:
-                syz = prefix +  syz.contents[0].attrs['href']
+                try:
+                    syz = prefix + syz.contents[0].attrs['href']
+                    print("[+] syz_repro: ", syz)
+                except AttributeError:
+                    syz = None
                 self.data.cases[idx]['syz'] = syz
-                print("[+] syz_repro: ", syz)
 
             if cpp.contents:
-                cpp = prefix + cpp.contents[0].attrs['href']
+                try:
+                    cpp = prefix + cpp.contents[0].attrs['href']
+                    print("[+] cpp_repro: ", cpp)
+                except AttributeError:
+                    cpp = None
                 self.data.cases[idx]['cpp'] = cpp
-                print("[+] cpp_repro: ", cpp)
 
     def __parse_assets_from_case(self, idx, case):
         assets = case.find("td", {"class": "assets"})

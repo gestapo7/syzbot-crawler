@@ -1,3 +1,4 @@
+import os
 import json
 import datetime
 import requests
@@ -20,25 +21,44 @@ FIXED = "https://syzkaller.appspot.com/upstream/fixed"
 INVALID = "https://syzkaller.appspot.com/upstream/invalid"
 
 def check_url(url):
+    """
+    return 2 types of the url
+    """
+    ID = 0
+    EXTID = 1
+    ERROR = 2
     # https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac
     hash = ""
     if url.__contains__("bug?id="):
         idx = url.index("bug?id=") + len("bug?id=")
         hash = url[idx:]
-        url_flag = 0
+        type = ID
     # https://syzkaller.appspot.com/bug?extid=dcc068159182a4c31ca3
     elif url.__contains__("?extid="):
         # test for https://syzkaller.appspot.com/bug?extid=60db9f652c92d5bacba4
         idx = url.index("?extid=") + len("?extid=")
         hash = url[idx:]
-        url_flag = 1
+        type = EXTID
     else:
         print("[-] url format not support")
-        url_flag = 2
+        type = ERROR
         exit(-1)
-    return (hash, url_flag)
+    return (hash, type)
+
+
+class Dashboard():
+    def __init__(self):
+        pass
+
+    def save(self):
+        pass
 
 class dashCrawler(Crawler):
+    """
+    mode:
+        1. nested
+        2. all
+    """
     def __init__(self,
                  url,
                  mode=0,
@@ -47,7 +67,7 @@ class dashCrawler(Crawler):
                  dst=""):
 
         self.url = url
-    
+
         if url in (OPEN, MODERATION, FIXED, INVALID):
             pass
         else:
@@ -66,27 +86,31 @@ class dashCrawler(Crawler):
         print('[+] {}'.format(self.url))
 
         self.nested_mode = False
+
         if isinstance(data, AssessData):
             self.nested = True
-        
+
+        if isinstance(data, BugData):
+            self.nested = True
+
         self.open_table = []
         self.fixed_table = []
         self.invalid_table = []
         self.moderation_table = []
         # self.csv = "{0}-{1}.csv".format("open", curr.strftime("%Y-%m-%d"))
-    
+
     def normalize_url(self, url):
         return "https://syzkaller.appspot.com" + url
-    
+
     def normalize_str(self, s):
         if s:
             return s.strip()
         else:
             return s
-    
-    def assess_parse_open(self):
-        if not isinstance(self.data, AssessData):
-            return
+
+    def parse_open(self):
+        # if not isinstance(self.data, AssessData):
+        #     return
 
         # cb.bugCrawler(url=table[1])
         print(self.open_table)
@@ -95,22 +119,26 @@ class dashCrawler(Crawler):
                 print(idx, cnt[0])
                 title = cnt[0]
                 url = cnt[1]
-                hash, url_flag = check_url(url)
+                hash, type = check_url(url)
 
                 data = BugData(hash)
-                bug = cb.bugCrawler(url=url, type=url_flag, data=data)
+                bug = cb.bugCrawler(url=url,
+                                    title=title,
+                                    type=type,
+                                    data=data)
                 bug.parse()
                 bug.show()
+                bug.save(dst="/home/spark/ESCAPE/yome-syzbots/open")
 
         except KeyboardInterrupt:
             exit(-1)
-    
+
     def assess_parse_moderation(self, table):
         pass
-    
+
     def assess_parse_fixed(self, table):
         pass
-    
+
     def assess_parse_invalid(self, table):
         pass
 
@@ -143,12 +171,12 @@ class dashCrawler(Crawler):
             else:
                 print("table is none. please check your dashboard url!")
                 exit(-1)
-        
+
         elif self.url == FIXED:
             tables = self.__parse_table()
             if len(tables) == 1:
                 self.__parse_fixed_table(tables[0])
-        
+
         elif self.url == INVALID:
             tables = self.__parse_table()
             if len(tables) == 1:
@@ -157,6 +185,13 @@ class dashCrawler(Crawler):
         else:
             print("invalid url")
             exit(-1)
+
+
+    def save(self, dst, onlyLog=False):
+        if not os.path.exists(dst):
+            print("dst don't exists")
+            exit(-1)
+        import ipdb;ipdb.set_trace();
 
 
     def __parse_table(self):
@@ -184,7 +219,7 @@ class dashCrawler(Crawler):
         # with open(os.path.join(self.dst, self.csv), 'w') as fd:
             # newfd = csv.writer(fd)
         self.open_table = []
-        for idx, case in enumerate(cases):
+        for _, case in enumerate(cases):
             if len(case.find("td", {"class": "stat"}).contents) == 0:
                 tds = case.find_all("td")
                 # for idx,td in enumerate(tds):
@@ -205,7 +240,8 @@ class dashCrawler(Crawler):
                     print("wtf man, {0}".format(e))
                     exit(-1)
 
-                self.assess_parse_open()
+        if self.nested:
+            self.parse_open()
                 # print(url, title)
                 # for every in  case.find_all("td", {"class": "stat"}):
                 #     print(every)
@@ -239,7 +275,6 @@ class dashCrawler(Crawler):
                     exit(-1)
 
                 # print(idx, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
-                # import ipdb; ipdb.set_trace();
                 # self.assess_parse_open()
 
         # cases = self.parse_table_index(table)

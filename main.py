@@ -8,7 +8,7 @@ import crawler_bug as cb
 import crawler_lkml as cl
 import crawler_dashboard as cd
 
-from crawler import Data,DeployData,ReproduceData,AssessData
+from crawler import Data,DeployData,BugData,ReproduceData,AssessData
 
 def check_url(url):
     # https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac
@@ -55,7 +55,9 @@ if __name__ == "__main__":
     #     crawler.show()
     # else:
     #     print("[-] need url link to syzbot")
-    # import ipdb;ipdb.set_trace();
-    ad = AssessData()
-    dCrawler = cd.dashCrawler("https://syzkaller.appspot.com/upstream", data=ad)
+    bd = BugData()
+    # ad = AssessData()
+    dCrawler = cd.dashCrawler("https://syzkaller.appspot.com/upstream", data=bd)
     dCrawler.parse()
+    dst = "/home/spark/ESCAPE/yome-syzbots"
+    dCrawler.save(dst, onlyLog=True)

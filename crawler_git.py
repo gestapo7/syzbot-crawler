@@ -28,7 +28,7 @@ class gitInfo():
         self.TestedBy = []
         self.ReviewedBy = []
         self.Cc = []
-    
+
     def __repr__(self):
         raw = ""
         raw += "~~~ Commit Info ~~~\n"
@@ -48,7 +48,7 @@ class gitInfo():
         raw += "Tested:    {}\n".format(self.TestedBy)
         raw += "Reviewed:  {}\n".format(self.ReviewedBy)
         return raw
-    
+
     def __str__(self):
         raw = ""
         raw += "~~~ Commit Info ~~~\n"
@@ -76,7 +76,7 @@ class gitCrawler(Crawler):
                  dst=""):
 
         self.url = url
-    
+
         if not url.startswith("https://git.kernel.org/"):
             print("[-] url is invalid, please check, mustbe git.kernel.org")
             exit(-1)
@@ -113,7 +113,7 @@ class gitCrawler(Crawler):
         else:
             print('[+] table contains {} cases'.format(len(cases)))
         return cases
-    
+
     def strip_prefix(self, msg, prefix):
         if msg.startswith(prefix):
             return msg[len(prefix)-1:].strip()
@@ -140,7 +140,7 @@ class gitCrawler(Crawler):
             except requests.RequestException as e:
                 print("[-] Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
                 delay = random.uniform(0, 5)
-                time.sleep(delay) 
+                time.sleep(delay)
                 retries += 1
 
         content = self.soup.find("div", {"class":"content"})
@@ -155,21 +155,21 @@ class gitCrawler(Crawler):
                 self.info.tree = self.strip_prefix(tds[3].text, "tree")
                 self.info.parent = self.strip_prefix(tds[4].text, "parent")
                 self.info.download = tds[5].a['href']
-        try: 
+        try:
             self.info.title = self.soup.find("div", {"class": "commit-subject"}).string
             self.info.logmsg = self.soup.find("div", {"class": "commit-msg"}).string
         except:
             print("[-] wtf, debug ASAP")
-        
+
         if self.info.logmsg:
             self.__parse_logmsg()
-        
+
         return
-    
+
     def __parse_logmsg(self):
         # print(self.info.logmsg)
         lines = self.info.logmsg.split("\n")
-        description = [] 
+        description = []
         for idx, line in enumerate(lines):
             if line.startswith("Fixes: "):
                 self.info.Fixes.append(self.strip_prefix(line, "Fixes: "))
@@ -187,7 +187,7 @@ class gitCrawler(Crawler):
                 self.info.TestedBy.append(self.strip_prefix(line, "Tested-by: "))
             else:
                 description.append(line)
-            
+
         self.info.Desrciption = "\n".join(description)
 
 if __name__ == "__main__":

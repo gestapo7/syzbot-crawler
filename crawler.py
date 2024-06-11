@@ -67,11 +67,17 @@ class DeployData(Data):
         # manager name
         self.cases[idx]["manager"] = None
 
-    def serialize():
+    def serialize(self):
         pass
 
-    def deserialize():
+    def deserialize(self):
         pass
+
+    def __repr__(self):
+        return "DeployData"
+
+    def __str__(self):
+        return "DeployData"
 
 class BugData(Data):
     def __init__(self, hash=""):
@@ -110,17 +116,24 @@ class BugData(Data):
         # manager name
         self.cases[idx]["manager"] = None
 
-    def serialize():
+    def serialize(self):
         pass
 
-    def deserialize():
+    def deserialize(self):
         pass
+
+    def __repr__(self):
+        return "BugData"
+
+    def __str__(self):
+        return "BugData"
 
 class ReproduceData(Data):
     def __init__(self):
         super(ReproduceData, self).__init__()
 
 class AssessData(Data):
+
     def __init__(self):
         super(AssessData, self).__init__()
 
@@ -142,6 +155,12 @@ class AssessData(Data):
         self.s_time = 0
         # close time, if not close, time=-1
         self.c_time = 0
+
+    def __repr__(self):
+        return "AssessData"
+
+    def __str__(self):
+        return "AssessData"
 
 class Crawler():
     def __init__():
