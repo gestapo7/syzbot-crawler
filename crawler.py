@@ -15,18 +15,18 @@ class Data(object):
         #     print("[-] init failed, we need a unique hash for Data.")
         #     exit(-1)
         # else:
-        if hash is not "":
+        if hash != "":
             self.hash = hash
 
-        if dst is not "":
+        if dst != "":
             if not os.path.exists(dst):
                 print("[-] dst do not exist")
             else:
                 self.dst = dst
-    
+
     # def __str__(self):
     #     return '0'
-    
+
     # def __repr__(self):
     #     return '1'
 
@@ -66,10 +66,10 @@ class DeployData(Data):
             self.cases[idx]["assets"] = {}
         # manager name
         self.cases[idx]["manager"] = None
-    
+
     def serialize():
         pass
-    
+
     def deserialize():
         pass
 
@@ -109,10 +109,10 @@ class BugData(Data):
             self.cases[idx]["assets"] = {}
         # manager name
         self.cases[idx]["manager"] = None
-    
+
     def serialize():
         pass
-    
+
     def deserialize():
         pass
 

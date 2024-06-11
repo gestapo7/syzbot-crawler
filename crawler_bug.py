@@ -42,7 +42,7 @@ class bugCrawler(Crawler):
             exit(-1)
 
         self.data = data
-    
+
         # url type 0,1 or othres
         self.type = type
 
@@ -165,12 +165,12 @@ class bugCrawler(Crawler):
         else:
             print("[-] why there are multi bug-bisection-infos")
             exit(-1)
-        
+
         cause_bisection_url,fixed_bisection_url = None, None
         if cause_bisection:
             cause = cause_bisection.find('b').string
             if cause == "Cause bisection: introduced by":
-                cause_bisection_url = cause_bisection.find('br').find('a').attrs['href'] 
+                cause_bisection_url = cause_bisection.find('br').find('a').attrs['href']
 
         if fixed_bisection:
             fixed = fixed_bisection.find('b').string
@@ -178,7 +178,7 @@ class bugCrawler(Crawler):
                 fixed_bisection_url = fixed_bisection.find('br').find('a').attrs['href']
 
         return cause_bisection_url, fixed_bisection_url
-    
+
     def __parse_discussion(self):
         """
         return discussion_url(string[]), address(bool)
@@ -202,7 +202,7 @@ class bugCrawler(Crawler):
                         bot = match.group(1)
                         all = match.group(2)
                         # print(bot, all)
-                        if bot!=0: 
+                        if bot!=0:
                             address=True
             except:
                 self.logger.error("parse discussion table failed")
@@ -210,7 +210,7 @@ class bugCrawler(Crawler):
         else:
             print("[-] why there are multi discussion table")
             exit(-1)
-        
+
         return discussion_url, address
 
     def __parse_patch(self):

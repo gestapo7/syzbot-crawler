@@ -37,6 +37,7 @@ def check_url(url):
     #         run_one(args)
 
 def args_parse():
+    import argparse
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                      description='Deploy crash cases from syzbot\n')
     parser.add_argument('-d', '--dst', nargs='?', action='store', help='destination to store.\n'')')

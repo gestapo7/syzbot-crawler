@@ -205,7 +205,6 @@ class dashCrawler(Crawler):
                     print("wtf man, {0}".format(e))
                     exit(-1)
 
-                import ipdb; ipdb.set_trace();
                 self.assess_parse_open()
                 # print(url, title)
                 # for every in  case.find_all("td", {"class": "stat"}):
