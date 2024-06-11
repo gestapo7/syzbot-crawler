@@ -68,10 +68,10 @@ class DeployData(Data):
         self.cases[idx]["manager"] = None
 
     def serialize(self):
-        pass
+        return
 
     def deserialize(self):
-        pass
+        return
 
     def __repr__(self):
         return "DeployData"
@@ -97,6 +97,7 @@ class BugData(Data):
         self.cases[idx]["kernel"] = None
         self.cases[idx]["commit"] = None
         self.cases[idx]["is_upstream"] = False
+
         self.cases[idx]["config"] = None
         # syzkaller
         self.cases[idx]["syzkaller"] = None
@@ -111,6 +112,8 @@ class BugData(Data):
         # reproduce
         self.cases[idx]["syz"] = None
         self.cases[idx]["cpp"] = None
+
+        self.cases[idx]["repro"] = False
         # assets infomation
         if self.assets:
             self.cases[idx]["assets"] = {}
@@ -118,7 +121,16 @@ class BugData(Data):
         self.cases[idx]["manager"] = None
 
     def serialize(self):
-        pass
+        data = {
+            "url": self.url,
+            "title": self.title,
+            "hash": self.hash,
+            "patch": self.patch,
+            "repro": self.repro,
+            "cases": self.cases
+        }
+
+        return json.dumps(data, indent=4)
 
     def deserialize(self):
         pass

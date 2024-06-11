@@ -1,6 +1,7 @@
 import re
 import os
 import sys
+import json
 import time
 import shutil
 import random
@@ -167,20 +168,19 @@ class bugCrawler(Crawler):
             print("create folder {0}".format(folder))
             os.makedirs(folder)
 
+        if save_bug:
+            data = self.data.serialize()
+            if data:
+                file = os.path.join(folder, self.data.hash + ".json")
+                with open(file, 'w') as f:
+                    json.dump(data, f, indent=4)
+            else:
+                print("data serialize failed or data failed")
+
         if save_log:
             ignore = self.__save_logs(folder, repro=repro)
             if ignore:
                 print("save logs done")
-
-    def __save_log(self, dst, idx):
-        if not dst:
-            log_path = os.path.join(dst, 'log')
-        else:
-            log_path = ""
-        req = requests.request(method='GET', url=self.data.cases[idx]['log'])
-        with open(log_path, "wb") as fd:
-            fd.write(req.text.encode())
-        return True
 
     def __save_logs(self, dst, repro=False):
         # TODO: add multiprocess for this deploy prograss
@@ -419,6 +419,12 @@ class bugCrawler(Crawler):
                 except AttributeError:
                     cpp = None
                 self.data.cases[idx]['cpp'] = cpp
+
+            # add self.data.cases[idx] repro
+            if self.data.cases[idx]['cpp'] or self.data.cases[idx]['syz']:
+                self.data.cases[idx]['repro'] = True
+            else:
+                self.data.cases[idx]['repro'] = False
 
     def __parse_assets_from_case(self, idx, case):
         assets = case.find("td", {"class": "assets"})
