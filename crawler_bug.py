@@ -291,6 +291,8 @@ class bugCrawler(Crawler):
             except:
                 self.logger.error("parse discussion table failed")
                 return None, None
+        elif len(span_tag) ==0:
+            return None, None
         else:
             print("[-] why there are multi discussion table")
             exit(-1)
