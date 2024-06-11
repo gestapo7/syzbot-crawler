@@ -45,20 +45,27 @@ def args_parse():
     return args
 
 if __name__ == "__main__":
-    args_parse()
+    # args_parse()
     # print(sys.argv)
-    # if len(sys.argv) == 2:
-    #     url = sys.argv[1]
-    #     hash, url_flag = check_url(url)
-    #     data = cd.Datastorer(hash)
-    #     crawler = cd.Crawler(data, url, url_flag)
-    #     crawler.parse()
-    #     crawler.show()
-    # else:
-    #     print("[-] need url link to syzbot")
+
+    url = ""
+    if len(sys.argv) == 2:
+        which = int(sys.argv[1])
+        if which == 1:
+            url = "https://syzkaller.appspot.com/upstream"
+        elif which ==2:
+            url = "https://syzkaller.appspot.com/upstream/fixed"
+        elif which ==3:
+            url = "https://syzkaller.appspot.com/upstream/invalid"
+        else:
+            print("erro url link to syzbot")
+            exit(-1)
+    else:
+        print("erro args")
+        exit(-1)
+
     bd = BugData()
-    # ad = AssessData()
-    dCrawler = cd.dashCrawler("https://syzkaller.appspot.com/upstream", data=bd)
+    dCrawler = cd.dashCrawler(url, data=bd)
     dCrawler.parse()
     dst = "/home/spark/ESCAPE/yome-syzbots"
     dCrawler.save(dst, onlyLog=True)

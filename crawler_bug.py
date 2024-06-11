@@ -167,6 +167,9 @@ class bugCrawler(Crawler):
         if not os.path.exists(folder):
             print("create folder {0}".format(folder))
             os.makedirs(folder)
+        else:
+            print("this bug is ok")
+            return
 
         if save_bug:
             data = self.data.serialize()

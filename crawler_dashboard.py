@@ -64,8 +64,6 @@ class dashCrawler(Crawler):
 
         if url == OPEN:
             self.type = "O"
-        elif url == MODERATION:
-            self.type = "M"
         elif url == FIXED:
             self.type = "F"
         elif url == INVALID:
@@ -112,9 +110,19 @@ class dashCrawler(Crawler):
 
     # TODO: nested parse handle
     def parse_nested(self, save=False):
-        print(self.open_table)
+        table = None
+        if self.type == "O":
+            table = self.open_table + self.moderation_table
+            dst = "/home/spark/ESCAPE/yome-syzbots/open"
+        elif self.type == "F":
+            table = self.fixed_table
+            dst = "/home/spark/ESCAPE/yome-syzbots/fixed"
+        elif self.type == "I":
+            table = self.invalid_table
+            dst = "/home/spark/ESCAPE/yome-syzbots/invalid"
+
         try:
-            for idx,cnt in enumerate(self.open_table):
+            for idx,cnt in enumerate(table):
                 print(idx, cnt[0])
                 title = cnt[0]
                 url = cnt[1]
@@ -127,7 +135,8 @@ class dashCrawler(Crawler):
                                     data=data)
                 bug.parse()
                 bug.show()
-                bug.save(dst="/home/spark/ESCAPE/yome-syzbots/open", repro=True, save_log=True, save_bug=True)
+                if save:
+                    bug.save(dst, repro=True, save_log=True, save_bug=True)
 
         except KeyboardInterrupt:
             exit(-1)
@@ -166,6 +175,8 @@ class dashCrawler(Crawler):
                             # moderation table
                             if "moderation" in table.caption.find("a", {"class", "plain"}).string.strip():
                                 self.__parse_moderation_table(table)
+                if self.nested:
+                    self.parse_nested(save=True)
 
             else:
                 print("table is none. please check your dashboard url!")
@@ -176,10 +187,16 @@ class dashCrawler(Crawler):
             if len(tables) == 1:
                 self.__parse_fixed_table(tables[0])
 
+                if self.nested:
+                    self.parse_nested(save=True)
+
         elif self.url == INVALID:
             tables = self.__parse_table()
             if len(tables) == 1:
                 self.__parse_invalid_table(tables[0])
+
+                if self.nested:
+                    self.parse_nested(save=True)
 
         else:
             print("invalid url")
@@ -216,56 +233,62 @@ class dashCrawler(Crawler):
         # with open(os.path.join(self.dst, self.csv), 'w') as fd:
             # newfd = csv.writer(fd)
         self.open_table = []
-        for _, case in enumerate(cases):
-            if len(case.find("td", {"class": "stat"}).contents) == 0:
-                tds = case.find_all("td")
-                # for idx,td in enumerate(tds):
-                    # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
-                try:
-                    title = tds[0].find("a").string
-                    url = self.normalize_url(tds[0].find('a').attrs['href'])
-                    repro = tds[1].string
-                    cause_bisect = tds[2].string
-                    fixed_bisect = tds[3].string
-                    count = tds[4].string
-                    last = tds[5].string
-                    reported = tds[6].string
-                    discussions = tds[7].text if tds[7].text is not None else ''
-                    self.open_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
-                    print(title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
-                except Exception as e:
-                    print("wtf man, {0}".format(e))
-                    exit(-1)
-
-        if self.nested:
-            self.parse_nested()
+        for idx, case in enumerate(cases):
+            # if len(case.find("td", {"class": "stat"}).contents) == 0:
+            tds = case.find_all("td")
+            # for idx,td in enumerate(tds):
+                # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
+            try:
+                title = tds[0].find("a").string
+                url = self.normalize_url(tds[0].find('a').attrs['href'])
+                repro = tds[1].string
+                cause_bisect = tds[2].string
+                fixed_bisect = tds[3].string
+                count = tds[4].string
+                last = tds[5].string
+                if tds[6].find("a"):
+                    reported = tds[6].find("a") # .attrs['href']
+                else:
+                    # TODO: reported werird situtation handler
+                    pass
+                discussions = tds[7].text if tds[7].text is not None else ''
+                self.open_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
+                print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
+            except Exception as e:
+                print("wtf man, {0}".format(e))
+                exit(-1)
+        return True
 
     def __parse_moderation_table(self, table):
         cases = self.__parse_table_index(table)
         # with open(os.path.join(self.dst, self.csv), 'w') as fd:
             # newfd = csv.writer(fd)
+        self.moderation_table = []
         for idx, case in enumerate(cases):
-            if len(case.find("td", {"class": "stat"}).contents) == 0:
-                tds = case.find_all("td")
-                # for idx,td in enumerate(tds):
-                    # pass
-                    # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
-                try:
-                    title = tds[0].find("a").string
-                    url = self.normalize_url(tds[0].find('a').attrs['href'])
-                    repro = self.normalize_str(tds[1].string)
-                    cause_bisect = tds[2].string
-                    fixed_bisect = tds[3].string
-                    count = tds[4].string
-                    last = tds[5].string
-                    reported = tds[6].string
-                    # TODO: discussion parser
-                    discussions = tds[7].text if tds[7].text is not None else ''
-                except Exception as e:
-                    print("wtf man, {0}".format(e))
-                    exit(-1)
-        if self.nested:
-            self.parse_nested()
+            # if len(case.find("td", {"class": "stat"}).contents) == 0:
+            tds = case.find_all("td")
+            # for idx,td in enumerate(tds):
+                # pass
+                # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
+            try:
+                title = tds[0].find("a").string
+                url = self.normalize_url(tds[0].find('a').attrs['href'])
+                repro = self.normalize_str(tds[1].string)
+                cause_bisect = tds[2].string
+                fixed_bisect = tds[3].string
+                count = tds[4].string
+                last = tds[5].string
+                # TODO: reported
+                reported = tds[6].string
+                # TODO: discussion parser
+                discussions = tds[7].text if tds[7].text is not None else ''
+                self.moderation_table.append([idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
+                print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
+            except Exception as e:
+                print("wtf man, {0}".format(e))
+                exit(-1)
+
+            return True
 
     def __parse_fixed_table(self, table):
         cases = self.__parse_table_index(table)
@@ -273,10 +296,6 @@ class dashCrawler(Crawler):
             # newfd = csv.writer(fd)
         for idx, case in enumerate(cases):
             tds = case.find_all("td")
-
-            # for idx,td in enumerate(tds):
-                # pass
-                # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
 
             title = tds[0].find("a").string
             url = self.normalize_url(tds[0].find('a').attrs['href'])
@@ -303,27 +322,18 @@ class dashCrawler(Crawler):
 
             print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, patched, closed, patch_commit, patch_depict)
 
-        if self.nested:
-            self.parse_nested()
-
     def __parse_invalid_table(self, table):
         cases = self.__parse_table_index(table)
         for idx, case in enumerate(cases):
-            if len(case.find("td", {"class": "stat"}).contents) == 0:
-                tds = case.find_all("td")
-                # for idx,td in enumerate(tds):
-                    # pass
-                    # url = normalize_url(case.find("td", {"class": "title"}).find('a', href=True).get('href'))
-                title = tds[0].find("a").string
-                url = self.normalize_url(tds[0].find('a').attrs['href'])
-                repro = self.normalize_str(tds[1].string)
-                cause_bisect = self.normalize_str(tds[2].string)
-                fixed_bisect = self.normalize_str(tds[3].string)
-                count = self.normalize_str(tds[4].string)
-                last = self.normalize_str(tds[5].string)
-                reported = self.normalize_str(tds[6].string)
-                print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported)
+            # if len(case.find("td", {"class": "stat"}).contents) == 0:
+            tds = case.find_all("td")
+            title = tds[0].find("a").string
+            url = self.normalize_url(tds[0].find('a').attrs['href'])
+            repro = self.normalize_str(tds[1].string)
+            cause_bisect = self.normalize_str(tds[2].string)
+            fixed_bisect = self.normalize_str(tds[3].string)
+            count = self.normalize_str(tds[4].string)
+            last = self.normalize_str(tds[5].string)
+            reported = self.normalize_str(tds[6].string)
+            print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported)
 
-
-        if self.nested:
-            self.parse_nested()
