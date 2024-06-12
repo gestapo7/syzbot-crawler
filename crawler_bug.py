@@ -388,7 +388,9 @@ class bugCrawler(Crawler):
             config = prefix + config.contents[0].attrs['href']
             self.data.cases[idx]['config'] = config
             print("[+] config: ", config)
-            self.__parse_compiler_version_from_config(idx, config)
+
+            # self.__parse_compiler_version_from_config(idx, config)
+
             # if self.dst is not None:
             #     req = requests.request(method='GET', url=new_url)
             #     with os.open(os.path.join(self.dst, 'config'), os.O_RDWR | os.O_CREAT) as fd:
@@ -474,12 +476,28 @@ class bugCrawler(Crawler):
             self.data.cases[idx]['time'] = time
 
     def __parse_compiler_version_from_config(self, idx, config):
-        req = requests.request(method='GET', url=config).text.encode()
-        start = req.find(b"CONFIG_CC_VERSION_TEXT=") + len("CONFIG_CC_VERSION_TEXT=")
+        while True:
+            try:
+                req = requests.get(url=config, timeout=5)
+                req.raise_for_status()
+                # self.soup = BeautifulSoup(req.text, "html.parser")
+
+                if not req.text:
+                    print("request boby is none, try again")
+                else:
+                    print("request boby contains {0} bytes".format(len(req.text)))
+                    break
+            except requests.RequestException as e:
+                delay = random.uniform(0, 5)
+                print("Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
+                time.sleep(delay)
+
+        cnt = req.text.encode()
+        start = cnt.find(b"CONFIG_CC_VERSION_TEXT=") + len("CONFIG_CC_VERSION_TEXT=")
         if start != -1:
-            end = req.find(b"\n", start)
+            end = cnt.find(b"\n", start)
         if end != -1:
-            compiler = req[start+1:end-1].decode('utf-8')
+            compiler = cnt[start+1:end-1].decode('utf-8')
             # gcc (GCC) 10.1.0-syz 20200507
             if "gcc" in compiler:
                 try:
