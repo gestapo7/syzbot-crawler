@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from crawler import BugData,DeployData,ReproduceData,AssessData
 from crawler import Crawler,OPEN,MODERATION,FIXED,INVALID
+from crawler import FILTER_CONTAINS,FILTER_STARTWITH
 
 import crawler_bug as cb
 import crawler_git as cg
@@ -40,6 +41,18 @@ def check_url(url):
         type = ERROR
         exit(-1)
     return (hash, type)
+
+def filter(s):
+
+    for f in FILTER_STARTWITH:
+        if s.startwith(f):
+            return True
+
+    for f in FILTER_CONTAINS:
+        if f in s:
+            return True
+
+    return False
 
 
 class Dashboard():
@@ -284,7 +297,8 @@ class dashCrawler(Crawler):
                     # TODO: reported werird situtation handler
                     pass
                 discussions = tds[7].text if tds[7].text is not None else ''
-                self.open_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
+                if not filter(title):
+                    self.open_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
                 print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
             except Exception as e:
                 print("wtf man, {0}".format(e))
@@ -314,7 +328,8 @@ class dashCrawler(Crawler):
                 reported = tds[6].string
                 # TODO: discussion parser
                 discussions = tds[7].text if tds[7].text is not None else ''
-                self.moderation_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
+                if not filter(title):
+                    self.moderation_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions])
                 print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, discussions)
             except Exception as e:
                 print("wtf man, {0}".format(e))
@@ -352,7 +367,8 @@ class dashCrawler(Crawler):
                     patch_depict = cnt.string
                 else:
                     patch_depict = self.normalize_str(cnt.a.string)
-            self.fixed_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, patched, closed, patch_commit, patch_depict])
+            if not filter(title):
+                self.fixed_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported, patched, closed, patch_commit, patch_depict])
             print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported, patched, closed, patch_commit, patch_depict)
 
     def __parse_invalid_table(self, table):
@@ -370,6 +386,7 @@ class dashCrawler(Crawler):
             last = self.normalize_str(tds[5].string)
             reported = self.normalize_str(tds[6].string)
 
-            self.invalid_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported])
+            if not filter(title):
+                self.invalid_table.append([title, url, repro, cause_bisect, fixed_bisect, count, last, reported])
             print(idx, title, url, repro, cause_bisect, fixed_bisect, count, last, reported)
 

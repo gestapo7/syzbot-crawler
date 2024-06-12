@@ -7,6 +7,20 @@ MODERATION = "https://syzkaller.appspot.com/upstream"
 FIXED = "https://syzkaller.appspot.com/upstream/fixed"
 INVALID = "https://syzkaller.appspot.com/upstream/invalid"
 
+
+# filter some in title
+FILTER_STARTWITH = [
+    "KCSAN",
+    "INFO: TASK hung",
+    "INFO: rcu detected",
+]
+
+FILTER_CONTAINS = [
+    "boot error",
+    "build error",
+    "test error"
+]
+
 class Data(object):
     """
     hash is the only unique id for data

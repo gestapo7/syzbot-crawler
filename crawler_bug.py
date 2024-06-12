@@ -145,6 +145,10 @@ class bugCrawler(Crawler):
             print("[-] table is none.")
             exit(-1)
 
+    def filter(self):
+        pass
+
+
     def save(self, dst, repro=False, save_bug=False, save_log=False):
         """
         repro:
@@ -294,6 +298,7 @@ class bugCrawler(Crawler):
         elif len(span_tag) ==0:
             return None, None
         else:
+            import ipdb; ipdb.set_trace();
             print("[-] why there are multi discussion table")
             exit(-1)
 
