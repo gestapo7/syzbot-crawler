@@ -198,19 +198,21 @@ class bugCrawler(Crawler):
                 # max_retries = 5
                 while True:
                     try:
-                        req = requests.request(method='GET', url=case['log'], timeout=5)
+                        req = requests.Session().get(url=case['log'], timeout=5)
                         req.raise_for_status()
+
                         if repro:
                             log = os.path.join(dst, 'log{}'.format(idx))
                         else:
                             log = os.path.join(dst, 'log{}'.format(idx))
+
                         if req.text:
                             print("downloading log{0} for {1} bytes".format(idx, len(req.text)))
                             with open(log, "wb") as fd:
                                 fd.write(req.text.encode())
                             break
                     except requests.RequestException as e:
-                        delay = random.uniform(0, 5)
+                        delay = random.uniform(0, 10)
                         print("Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
                         time.sleep(delay)
                         # retries = retries+1

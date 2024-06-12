@@ -45,7 +45,7 @@ def check_url(url):
 def filter(s):
 
     for f in FILTER_STARTWITH:
-        if s.startwith(f):
+        if s.startswith(f):
             return True
 
     for f in FILTER_CONTAINS:

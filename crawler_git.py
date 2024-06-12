@@ -64,7 +64,7 @@ class gitInfo():
         raw += self.Desrciption
         raw += "Fixes:     {}\n".format(self.Fixes)
         raw += "Reported:  {}\n".format(self.ReportedBy)
-        raw += "Cc:        {}\n".format(self.Cc )
+        raw += "Cc:        {}\n".format(self.Cc)
         raw += "SignedOff: {}\n".format(self.SignedOffBy)
         raw += "Acked:     {}\n".format(self.AckedBy)
         raw += "Tested:    {}\n".format(self.TestedBy)
