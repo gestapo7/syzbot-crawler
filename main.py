@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # print(sys.argv)
 
     url = ""
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3:
         which = int(sys.argv[1])
         if which == 1:
             url = "https://syzkaller.appspot.com/upstream"
@@ -60,12 +60,19 @@ if __name__ == "__main__":
         else:
             print("erro url link to syzbot")
             exit(-1)
+
+        where = sys.argv[2]
+        if not os.path.exists(where):
+            print("error dst not existed")
+            exit(-1)
     else:
         print("erro args")
         exit(-1)
 
     bd = BugData()
-    dCrawler = cd.dashCrawler(url, data=bd)
+
+    dCrawler = cd.dashCrawler(url, data=bd, nested=True, dst=where)
     dCrawler.parse()
-    dst = "/home/spark/ESCAPE/yome-syzbots"
-    dCrawler.save(dst, onlyLog=True)
+
+    # dst = "/home/tomcat/ESCAPE/yome-syzbots"
+    # dCrawler.save(where, onlyLog=True)

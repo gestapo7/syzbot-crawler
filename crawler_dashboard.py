@@ -92,7 +92,10 @@ class dashCrawler(Crawler):
         self.soup = None
         self.cases = {}
 
-        self.dst = dst
+        if dst == "":
+            self.dst = None
+        else:
+            self.dst = dst
 
         curr = datetime.datetime.now()
         print('[+] {}'.format(curr.strftime("%y-%m-%d")))
@@ -105,7 +108,6 @@ class dashCrawler(Crawler):
 
         if isinstance(data, BugData):
             self.nested = True
-
 
         self.dashboard_table = []
         self.open_table = []
@@ -126,15 +128,23 @@ class dashCrawler(Crawler):
     # TODO: nested parse handle
     def parse_nested(self, save=False):
         table = None
-        if self.type == "O":
-            table = self.open_table + self.moderation_table
-            dst = "/home/spark/ESCAPE/yome-syzbots/open"
-        elif self.type == "F":
-            table = self.fixed_table
-            dst = "/home/spark/ESCAPE/yome-syzbots/fixed"
-        elif self.type == "I":
-            table = self.invalid_table
-            dst = "/home/spark/ESCAPE/yome-syzbots/invalid"
+        dst = ""
+        if save:
+            if not self.dst:
+                print("no no no self.dst is none")
+                exit(-1)
+            else:
+                if self.type == "O":
+                    table = self.open_table + self.moderation_table
+                    dst = os.path.join(self.dst, "open")
+                elif self.type == "F":
+                    table = self.fixed_table
+                    dst = os.path.join(self.dst, "fixed")
+                    # dst = "/home/tomcat/ESCAPE/yome-syzbots/fixed"
+                elif self.type == "I":
+                    table = self.invalid_table
+                    dst = os.path.join(self.dst, "invalid")
+                    # dst = "/home/tomcat/ESCAPE/yome-syzbots/invalid"
 
         try:
             for idx,cnt in enumerate(table):
