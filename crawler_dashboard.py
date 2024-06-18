@@ -73,11 +73,11 @@ class dashCrawler(Crawler):
         self.url = url
 
         if url == OPEN:
-            self.type = "O"
+            self.flag = "O"
         elif url == FIXED:
-            self.type = "F"
+            self.flag = "F"
         elif url == INVALID:
-            self.type = "I"
+            self.flag = "I"
         else:
             print("url is invalid, please check")
             exit(-1)
@@ -129,13 +129,13 @@ class dashCrawler(Crawler):
                 print("no no no self.dst is none")
                 exit(-1)
             else:
-                if self.type == "O":
+                if self.flag == "O":
                     table = self.open_table + self.moderation_table
                     dst = os.path.join(self.dst, "open")
-                elif self.type == "F":
+                elif self.flag == "F":
                     table = self.fixed_table
                     dst = os.path.join(self.dst, "fixed")
-                elif self.type == "I":
+                elif self.flag == "I":
                     table = self.invalid_table
                     dst = os.path.join(self.dst, "invalid")
 
@@ -144,10 +144,10 @@ class dashCrawler(Crawler):
                 print(idx, cnt[0])
                 title = cnt[0]
                 url = cnt[1]
-                hash, type = check_url(url)
+                hash, flag = check_url(url)
 
                 data = BugData(hash)
-                bug = cb.bugCrawler(url=url, title=title, type=type, data=data)
+                bug = cb.bugCrawler(url=url, title=title, flag=flag, data=data)
                 bug.parse()
                 bug.show()
                 if save:
