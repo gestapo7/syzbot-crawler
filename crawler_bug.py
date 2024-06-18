@@ -57,7 +57,7 @@ class bugCrawler(Crawler):
     def __init__(self,
                  url,
                  title,
-                 type,
+                 flag,
                  data,
                  max = 0,
                  debug = False):
@@ -610,14 +610,16 @@ class bugCrawler(Crawler):
 
 if __name__ == "__main__":
     # url = "https://syzkaller.appspot.com/bug?id=d5d780ebdea00d45e7dcca8b25d9d7d2aff7da6c"
-    url = "https://syzkaller.appspot.com/bug?id=30466236e69668c67b90c8988ee44a85794222ae"
-    title = "2"
-    hash, type = check_url(url)
+    # url = "https://syzkaller.appspot.com/bug?id=30466236e69668c67b90c8988ee44a85794222ae"
+    # url = "https://syzkaller.appspot.com/bug?id=131df746862cee15e5b8c4f879524e8eececafd3"
+    url = "https://syzkaller.appspot.com/bug?id=c7f32230a7e2f3a034a3355feffca8e41bee900a"
+    title = "4"
+    hash, flag = check_url(url)
 
     data = BugData(hash)
     bug = bugCrawler(url=url,
                      title=title,
-                     type=type,
+                     flag=flag,
                      data=data)
     bug.parse()
     bug.show() 
