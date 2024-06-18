@@ -19,6 +19,7 @@ FILTER_CONTAINS = [
     "boot error",
     "build error",
     "test error"
+    "syzkaller"
 ]
 
 class Data(object):

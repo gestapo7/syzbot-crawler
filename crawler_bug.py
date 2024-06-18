@@ -7,6 +7,7 @@ import shutil
 import random
 import logging
 import requests
+import traceback
 import multiprocessing
 
 from IPython import embed
@@ -24,10 +25,33 @@ supports = {
     1: syzbot_bug_extid_url
 }
 
-
 # REPRO TAG
 REPRO_SUCCESS = "1"
 REPRO_FAILED = "0"
+
+def check_url(url):
+    # https://syzkaller.appspot.com/bug?id=1bef50bdd9622a1969608d1090b2b4a588d0c6ac
+    hash = ""
+    if url.__contains__("bug?id="):
+        idx = url.index("bug?id=") + len("bug?id=")
+        hash = url[idx:]
+        url_flag = 0
+    # https://syzkaller.appspot.com/bug?extid=dcc068159182a4c31ca3
+    elif url.__contains__("?extid="):
+        # test for https://syzkaller.appspot.com/bug?extid=60db9f652c92d5bacba4
+        idx = url.index("?extid=") + len("?extid=")
+        hash = url[idx:]
+        url_flag = 1
+    else:
+        print("[-] url format not support")
+        url_flag = 2
+        exit(-1)
+    return (hash, url_flag)
+
+class MeanlessUrl(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
 
 class bugCrawler(Crawler):
     def __init__(self,
