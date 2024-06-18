@@ -143,8 +143,11 @@ class bugCrawler(Crawler):
                         break
                 except requests.RequestException as e:
                     delay = random.uniform(0, 5)
+                    # import ipdb; ipdb.set_trace();
                     print("Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
                     time.sleep(delay)
+                except:
+                    import ipdb; ipdb.set_trace();
                     # retries = retries+1
 
         self.data.title = self.__parse_title()
@@ -238,8 +241,11 @@ class bugCrawler(Crawler):
                     except requests.RequestException as e:
                         delay = random.uniform(0, 10)
                         print("Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
+                        # import ipdb; ipdb.set_trace();
                         time.sleep(delay)
                         # retries = retries+1
+                    except:
+                        import ipdb; ipdb.set_trace();
         return True
 
 
@@ -361,26 +367,40 @@ class bugCrawler(Crawler):
                 # TODO: revoke data.assets
                 # if self.data.assets:
                     # self.__parse_assets_from_case(idx, case)
-
-            # whatever true!
+            # whatever true!!!
+            # mustbe true!!!
             return True
+        except MeanlessUrl as e:
+            self.logger.error("{0}".format(e))
+            return False
         except Exception as e:
+            traceback.print_exc()
             self.logger.error("parse crash table failed: {0}".format(e))
+            import ipdb; ipdb.set_trace();
             return False
         # we assume every bug will contain at least one entry which satisfy us?
         # let user choice which is better ?
     def __parse_table_index(self, table):
-        # FIXME: consider this is no upstream kernel crash
         # like https://syzkaller.appspot.com/bug?extid=c53d4d3ddb327e80bc51
         all_cases = table.tbody.find_all('tr')
+
+        # FIXME: There is Last patch testing requests table
         return all_cases
 
     def __parse_kernel_from_case(self, idx, case):
         cols = case.find_all("td", {"class": "kernel"})
+        # print(cols)
+        if cols == []:
+            import ipdb; ipdb.set_trace();
+
         kernel = cols[0].contents[0]
         if kernel is None:
             print("[-] Warning: kernel is none in url: {}".format(self.data.url))
         else:
+            # HACK: fuck https://syzkaller.appspot.com/bug?id=2c552e46576265a611ece4cbd486455d3462daa0
+            if "syzkaller" in kernel:
+                # import ipdb; ipdb.set_trace();
+                raise MeanlessUrl("{0} is useless".format(self.data.hash))
             self.data.cases[idx]['kernel'] = kernel
             print("[+] kernel: ", kernel)
 
