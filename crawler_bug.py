@@ -488,11 +488,12 @@ class bugCrawler(Crawler):
                     report = None
                 self.data.cases[idx]['report'] = report
 
-            if syz.contents:
+            syz_revoked = 'stale_repro' in syz.get("class")
+            syz_content = [item for item in syz.contents if isinstance(item, bs4.element.Tag)]
+            if syz_content:
                 try:
-                    syz_revoked = 'stale_repro' in syz.get("class")
                     # FIXME: filter "\n" or sth annoy me !!!
-                    syz_content = [item for item in syz.contents if isinstance(item, bs4.element.Tag)]
+                    # import ipdb; ipdb.set_trace();
                     syz = prefix + syz_content[0].attrs['href']
                     print("[+] syz_repro: ", syz)
                     self.data.repro = True
@@ -500,10 +501,10 @@ class bugCrawler(Crawler):
                     syz = None
                 self.data.cases[idx]['syz'] = syz
 
-            if cpp.contents:
+            cpp_revoked = 'stale_repro' in cpp.get("class") 
+            cpp_content = [item for item in cpp.contents if isinstance(item, bs4.element.Tag)]
+            if cpp_content:
                 try:
-                    cpp_revoked = 'stale_repro' in cpp.get("class") 
-                    cpp_content = [item for item in cpp.contents if isinstance(item, bs4.element.Tag)]
                     cpp = prefix + cpp_content[0].attrs['href']
                     print("[+] cpp_repro: ", cpp)
                     self.data.repro = True
