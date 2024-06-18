@@ -155,13 +155,14 @@ class bugCrawler(Crawler):
 
         self.__parse_bisection()
         self.__parse_discussion()
+        self.__parse_lastpatchrequests()
 
         tables = self.__parse_tables()
         if len(tables) >= 1:
             for i,table in enumerate(tables):
                 # NOTE: only consider crashes table
                 if table.caption is not None:
-                    if table.caption.contents[0].find("Crashes") is not None:
+                    if "Crashes" in table.caption.contents[0]:
                         # FIX: maybe not the crash table.
                         # sometimes is bisection and so on.
                         ignore = self.__parse_crash_table(table)
@@ -351,6 +352,9 @@ class bugCrawler(Crawler):
         if patch is not None:
             print("[+] patch: ", patch)
         return patch
+    
+    def __parse_lastpatchrequests(self):
+        pass
 
     def __parse_crash_table(self, table):
         try:
@@ -595,3 +599,18 @@ class bugCrawler(Crawler):
                           ])
         table.title = self.data.hash+ " " + self.data.title
         print(table)
+
+
+if __name__ == "__main__":
+    url = "https://syzkaller.appspot.com/bug?id=d5d780ebdea00d45e7dcca8b25d9d7d2aff7da6c"
+    title = "1"
+    hash, type = check_url(url)
+
+    data = BugData(hash)
+    bug = bugCrawler(url=url,
+                     title=title,
+                     type=type,
+                     data=data)
+    bug.parse()
+    bug.show() 
+    
