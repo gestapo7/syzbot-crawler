@@ -127,11 +127,12 @@ class bugCrawler(Crawler):
                         ^^^^^^^^^^^^^^^^
             AttributeError: 'NoneType' object has no attribute 'b'
             """
-            # retries = 0
-            # max_retries = 5
+            if not self.data.url:
+                import ipdb; ipdb.set_trace()
+                print("url is none")
+
             while True:
                 try:
-                    # req = requests.get(url=url, timeout=5)
                     req = requests.Session().get(url=self.data.url, timeout=5)
                     req.raise_for_status()
                     self.soup = BeautifulSoup(req.text, "html.parser")
@@ -143,12 +144,10 @@ class bugCrawler(Crawler):
                         break
                 except requests.RequestException as e:
                     delay = random.uniform(0, 5)
-                    # import ipdb; ipdb.set_trace();
                     print("Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
                     time.sleep(delay)
                 except:
                     import ipdb; ipdb.set_trace();
-                    # retries = retries+1
 
         self.data.title = self.__parse_title()
         self.data.patch = self.__parse_patch()
@@ -178,12 +177,6 @@ class bugCrawler(Crawler):
 
 
     def save(self, dst, repro=False, save_bug=False, save_log=False):
-        """
-        repro:
-        save_bug:
-        save_log:
-        """
-
         if not os.path.exists(dst):
             print("bug saves {0} don't exists".format(dst))
             os.makedirs(dst)
@@ -216,14 +209,21 @@ class bugCrawler(Crawler):
             ignore = self.__save_logs(folder, repro=repro)
             if ignore:
                 print("save logs done")
+            else:
+                print("save logs failed")
+
+            return
 
     def __save_logs(self, dst, repro=False):
         # TODO: add multiprocess for this deploy prograss
         for idx, case in self.data.cases.items():
             if not os.path.exists(os.path.join(dst, 'log{}'.format(idx))):
                 # FIXME: add reconnect for request in this part
-                # retries = 0
-                # max_retries = 5
+                if not case['log']:
+                    import ipdb; ipdb.set_trace();
+                    print("url is none")
+                    break
+
                 while True:
                     try:
                         req = requests.Session().get(url=case['log'], timeout=5)
@@ -240,14 +240,14 @@ class bugCrawler(Crawler):
                                 fd.write(req.text.encode())
                             break
                     except requests.RequestException as e:
-                        delay = random.uniform(0, 10)
+                        delay = random.uniform(0, 5)
                         print("Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
                         # import ipdb; ipdb.set_trace();
                         time.sleep(delay)
                         # retries = retries+1
                     except:
                         import ipdb; ipdb.set_trace();
-        return True
+            return True
 
 
     def __parse_title(self):
@@ -308,7 +308,7 @@ class bugCrawler(Crawler):
         discussion_url = []
         address = False
 
-        span_tag = self.soup.find_all('span', text=re.compile(r'Discussions \(\d+\)'))
+        span_tag = self.soup.find_all('span', string=re.compile(r'Discussions \(\d+\)'))
         if len(span_tag) == 1:
             div_head = span_tag[0].find_parent('div', class_='head')
             div_content = div_head.find_next_sibling('div', class_='content')
@@ -568,7 +568,6 @@ class bugCrawler(Crawler):
                 self.data.cases[idx]['clang'] = "clang"+ version
             else:
                 # FIXME: when it's not clang or gcc, will crash in show() function
-                # print("do not support this compiler")
                 pass
         else:
             print("[-] Warning: can not found gcc version in config")
@@ -602,8 +601,9 @@ class bugCrawler(Crawler):
 
 
 if __name__ == "__main__":
-    url = "https://syzkaller.appspot.com/bug?id=d5d780ebdea00d45e7dcca8b25d9d7d2aff7da6c"
-    title = "1"
+    # url = "https://syzkaller.appspot.com/bug?id=d5d780ebdea00d45e7dcca8b25d9d7d2aff7da6c"
+    url = "https://syzkaller.appspot.com/bug?id=30466236e69668c67b90c8988ee44a85794222ae"
+    title = "2"
     hash, type = check_url(url)
 
     data = BugData(hash)
@@ -613,4 +613,5 @@ if __name__ == "__main__":
                      data=data)
     bug.parse()
     bug.show() 
+    bug.save("/home/tomcat/ESCAPE/yome-syzbots/invalid", repro=True, save_log=True, save_bug=True)
     

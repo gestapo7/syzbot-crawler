@@ -63,11 +63,6 @@ class Dashboard():
         pass
 
 class dashCrawler(Crawler):
-    """
-    mode:
-        1. nested
-        2. all
-    """
     def __init__(self,
                  url,
                  mode=0,
@@ -140,11 +135,9 @@ class dashCrawler(Crawler):
                 elif self.type == "F":
                     table = self.fixed_table
                     dst = os.path.join(self.dst, "fixed")
-                    # dst = "/home/tomcat/ESCAPE/yome-syzbots/fixed"
                 elif self.type == "I":
                     table = self.invalid_table
                     dst = os.path.join(self.dst, "invalid")
-                    # dst = "/home/tomcat/ESCAPE/yome-syzbots/invalid"
 
         try:
             for idx,cnt in enumerate(table):
