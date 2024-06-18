@@ -220,7 +220,7 @@ class bugCrawler(Crawler):
             if not os.path.exists(os.path.join(dst, 'log{}'.format(idx))):
                 # FIXME: add reconnect for request in this part
                 if not case['log']:
-                    import ipdb; ipdb.set_trace();
+                    # import ipdb; ipdb.set_trace();
                     print("url is none")
                     break
 
@@ -416,15 +416,23 @@ class bugCrawler(Crawler):
         if self.data.cases[idx]['is_upstream']:
             commits = cols[0].contents[0].contents[0]
         else:
-            commits = cols[0].contents[0].attrs['href']
+            # HACK:
+            # https://syzkaller.appspot.com/bug?extid=29cc278357da941e304e
+            # mmots ce3c209f6733
+            try:
+                commits = cols[0].contents[0].attrs['href']
+            except AttributeError:
+                commits = cols[0].contents[0]
+            finally:
+                print("[+] commit: ", commits)
+                
         syzkaller = cols[1].contents[0].contents[0]
+        print("[+] syzkaller: ", syzkaller)
         if commits is None or syzkaller is None:
             print("[-] Warning: commits or syzkaller is none in url: {}".format(self.data.url))
         else:
             self.data.cases[idx]["commit"] = commits
-            print("[+] commit: ", commits)
             self.data.cases[idx]["syzkaller"] = syzkaller
-            print("[+] syzkaller: ", syzkaller)
 
     def __parse_config_from_case(self, idx, case):
         ok = self.data.url.index("bug")
