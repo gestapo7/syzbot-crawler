@@ -514,10 +514,9 @@ class bugCrawler(Crawler):
 
             # FIXME: judge syz repro or c repro vaild or not
             self.data.cases[idx]['repro'] = False
-            
             # add self.data.cases[idx] repro
             if (self.data.cases[idx]['cpp'] and not cpp_revoked) or (self.data.cases[idx]['syz'] and not syz_revoked):
-                import ipdb; ipdb.set_trace()
+                # import ipdb; ipdb.set_trace()
                 self.data.cases[idx]['repro'] = True
 
     def __parse_assets_from_case(self, idx, case):
