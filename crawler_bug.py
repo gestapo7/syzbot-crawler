@@ -1,7 +1,9 @@
 import re
 import os
+import bs4
 import sys
 import json
+import glob
 import time
 import shutil
 import random
@@ -77,7 +79,7 @@ class bugCrawler(Crawler):
         self.data = data
 
         # url type 0,1 or othres
-        self.type = type
+        self.flag = flag
 
         self.data.url = url
         self.data.title = title
@@ -103,7 +105,7 @@ class bugCrawler(Crawler):
 
     def parse(self):
         try:
-            bug_url = supports[self.type]
+            bug_url = supports[self.flag]
             self.logger.debug("{}{}{}".format(syzbot_host_url, bug_url, hash))
             url = syzbot_host_url + bug_url + self.data.hash
             if url != self.data.url:
@@ -128,8 +130,8 @@ class bugCrawler(Crawler):
             AttributeError: 'NoneType' object has no attribute 'b'
             """
             if not self.data.url:
+                print("url is none, wtf ???")
                 import ipdb; ipdb.set_trace()
-                print("url is none")
 
             while True:
                 try:
@@ -143,7 +145,7 @@ class bugCrawler(Crawler):
                         print("request boby contains {0} bytes".format(len(req.text)))
                         break
                 except requests.RequestException as e:
-                    delay = random.uniform(0, 5)
+                    delay = random.uniform(0, 3)
                     print("Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
                     time.sleep(delay)
                 except:
@@ -193,26 +195,34 @@ class bugCrawler(Crawler):
             print("create folder {0}".format(folder))
             os.makedirs(folder)
         else:
-            print("this bug is ok")
-            return
+            print("bug folder is created.")
 
         if save_bug:
             data = self.data.serialize()
+            # import ipdb; ipdb.set_trace()
             if data:
                 file = os.path.join(folder, self.data.hash + ".json")
+                # FIXME: now force replace all because previous are wrong
+                # if not os.path.exists(file):
                 with open(file, 'w') as f:
-                    json.dump(data, f, indent=4)
+                    # NOTE: json is ok... what are you doing...
+                    f.write(data)
+                # else:
+                #     print("json file is created")
             else:
                 print("data serialize failed or data failed")
 
         if save_log:
-            ignore = self.__save_logs(folder, repro=repro)
-            if ignore:
-                print("save logs done")
+            logs = glob.glob(os.path.join(folder, "log*"))
+            if len(logs) == len(self.data.cases):
+                print("logs are downloaded")
             else:
-                print("save logs failed")
-
-            return
+                ignore = self.__save_logs(folder, repro=repro)
+                if ignore:
+                    print("save logs done")
+                else:
+                    print("save logs failed")
+        return
 
     def __save_logs(self, dst, repro=False):
         # TODO: add multiprocess for this deploy prograss
@@ -221,8 +231,8 @@ class bugCrawler(Crawler):
                 # FIXME: add reconnect for request in this part
                 if not case['log']:
                     # import ipdb; ipdb.set_trace();
-                    print("url is none")
-                    break
+                    print("[-] url is none")
+                    continue
 
                 while True:
                     try:
@@ -240,14 +250,15 @@ class bugCrawler(Crawler):
                                 fd.write(req.text.encode())
                             break
                     except requests.RequestException as e:
-                        delay = random.uniform(0, 5)
+                        delay = random.uniform(0, 3)
                         print("Request failed: {0}. \nRetrying in {1} seconds...".format(e, delay))
                         # import ipdb; ipdb.set_trace();
                         time.sleep(delay)
                         # retries = retries+1
                     except:
+                        print("what happened!")
                         import ipdb; ipdb.set_trace();
-            return True
+        return True
 
 
     def __parse_title(self):
@@ -459,8 +470,7 @@ class bugCrawler(Crawler):
             print("[-] Warning: bug not found in {}".format(self.data.url))
         else:
             prefix = self.data.url[:ok]
-            all = case.find_all("td", {"class": "repro"})
-            log,report,syz,cpp,_ = case.find_all("td", {"class": "repro"})
+            log,report,syz,cpp,_ = case.find_all("td", {"class": ["repro", "repro stale_repro"]})
 
             if log.contents:
                 try:
@@ -480,7 +490,10 @@ class bugCrawler(Crawler):
 
             if syz.contents:
                 try:
-                    syz = prefix + syz.contents[0].attrs['href']
+                    syz_revoked = 'stale_repro' in syz.get("class")
+                    # FIXME: filter "\n" or sth annoy me !!!
+                    syz_content = [item for item in syz.contents if isinstance(item, bs4.element.Tag)]
+                    syz = prefix + syz_content[0].attrs['href']
                     print("[+] syz_repro: ", syz)
                     self.data.repro = True
                 except AttributeError:
@@ -489,18 +502,22 @@ class bugCrawler(Crawler):
 
             if cpp.contents:
                 try:
-                    cpp = prefix + cpp.contents[0].attrs['href']
+                    cpp_revoked = 'stale_repro' in cpp.get("class") 
+                    cpp_content = [item for item in cpp.contents if isinstance(item, bs4.element.Tag)]
+                    cpp = prefix + cpp_content[0].attrs['href']
                     print("[+] cpp_repro: ", cpp)
                     self.data.repro = True
                 except AttributeError:
                     cpp = None
                 self.data.cases[idx]['cpp'] = cpp
 
+            # FIXME: judge syz repro or c repro vaild or not
+            self.data.cases[idx]['repro'] = False
+            
             # add self.data.cases[idx] repro
-            if self.data.cases[idx]['cpp'] or self.data.cases[idx]['syz']:
+            if (self.data.cases[idx]['cpp'] and not cpp_revoked) or (self.data.cases[idx]['syz'] and not syz_revoked):
+                import ipdb; ipdb.set_trace()
                 self.data.cases[idx]['repro'] = True
-            else:
-                self.data.cases[idx]['repro'] = False
 
     def __parse_assets_from_case(self, idx, case):
         assets = case.find("td", {"class": "assets"})

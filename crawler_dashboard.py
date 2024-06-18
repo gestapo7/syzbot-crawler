@@ -147,10 +147,7 @@ class dashCrawler(Crawler):
                 hash, type = check_url(url)
 
                 data = BugData(hash)
-                bug = cb.bugCrawler(url=url,
-                                    title=title,
-                                    type=type,
-                                    data=data)
+                bug = cb.bugCrawler(url=url, title=title, type=type, data=data)
                 bug.parse()
                 bug.show()
                 if save:
